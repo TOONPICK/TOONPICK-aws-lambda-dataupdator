@@ -1,11 +1,11 @@
-import { BaseScrapper } from './baseScrapper.js';
-import { NaverScrapper } from './platforms/naverScrapper.js';
+import { ContentCollector } from './contentCollector.js';
+import { NaverScrapingImplementor } from './platforms/naverScrapingImplementor.js';
 
-export class WebtoonScrapper extends BaseScrapper {
+export class WebtoonContentCollector extends ContentCollector {
     constructor() {
         super();
-        this.platformScrappers = new Map([
-            ['NAVER', new NaverScrapper()]
+        this.implementors = new Map([
+            ['NAVER', new NaverScrapingImplementor()]
         ]);
     }
 
@@ -17,14 +17,14 @@ export class WebtoonScrapper extends BaseScrapper {
     async execute(browser, data) {
         const { titleId, platform = 'NAVER' } = data;
         
-        const platformScrapper = this.platformScrappers.get(platform);
-        if (!platformScrapper) {
+        const implementor = this.implementors.get(platform);
+        if (!implementor) {
             throw new Error(`지원하지 않는 플랫폼입니다: ${platform}`);
         }
 
         const page = await browser.newPage();
         try {
-            const title = await platformScrapper.scrapTitle(page, titleId);
+            const title = await implementor.scrapTitle(page, titleId);
 
             return {
                 statusCode: 200,
