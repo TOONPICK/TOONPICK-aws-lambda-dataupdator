@@ -6,10 +6,14 @@
   "type": "module",
   "scripts": {
     "start": "node local.js",
-    "test": "node test.js"
+    "test": "node test.js",
+    "build": "powershell -File deploy.ps1"
   },
   "dependencies": {
-    "puppeteer": "^21.0.0",
-    "@sparticuz/chromium": "^109.0.5"
+    "@sparticuz/chromium": "^109.0.5",
+    "puppeteer-core": "^21.0.0"
+  },
+  "devDependencies": {
+    "puppeteer": "^21.0.0"
   }
 }

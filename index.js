@@ -1,8 +1,6 @@
 // index.js
-import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
-import { DEFAULT_VIEWPORT, crawlWebtoonTitle } from './crawler.js';
-import { parseWebtoonCrawlRequest } from './types.js';
+import { Crawler } from './crawler.js';
+import { LambdaBrowserFactory } from './factories/lambdaBrowserFactory.js';
 
 export async function handler(event) {
     // SQS 이벤트에서 첫 번째 레코드를 처리
@@ -10,36 +8,11 @@ export async function handler(event) {
         throw new Error('SQS 메시지가 없습니다.');
     }
 
-    const request = parseWebtoonCrawlRequest(event.Records[0]);
-
-    const browser = await puppeteer.launch({
-        args: chromium.args,
-        defaultViewport: DEFAULT_VIEWPORT,
-        executablePath: await chromium.executablePath(),
-        headless: "shell",
-        ignoreHTTPSErrors: true
-    });
-
-    try {
-        const title = await crawlWebtoonTitle(browser, request.titleId);
-        return {
-            statusCode: 200,
-            body: JSON.stringify({
-                requestId: request.requestId,
-                titleId: request.titleId,
-                title,
-            }),
-        };
-    } catch (error) {
-        console.error('크롤링 실패:', error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({
-                requestId: request.requestId,
-                error: error.message,
-            }),
-        };
-    } finally {
-        await browser.close();
-    }
+    const record = event.Records[0];
+    const body = JSON.parse(record.body);
+    
+    // 크롤러 실행
+    const browserFactory = new LambdaBrowserFactory();
+    const crawler = new Crawler(browserFactory);
+    return await crawler.execute(body);
 }

@@ -1,6 +1,5 @@
-import puppeteer from 'puppeteer';
-import { DEFAULT_VIEWPORT, crawlWebtoonTitle } from './crawler.js';
-import { parseWebtoonCrawlRequest } from './types.js';
+import { Crawler } from './crawler.js';
+import { LocalBrowserFactory } from './factories/localBrowserFactory.js';
 
 // 테스트용 SQS 메시지 생성
 const mockSQSEvent = {
@@ -33,24 +32,14 @@ const mockSQSEvent = {
 };
 
 async function runLocal() {
-    // SQS 메시지 파싱
-    const request = parseWebtoonCrawlRequest(mockSQSEvent.Records[0]);
-
-    const browser = await puppeteer.launch({
-        defaultViewport: DEFAULT_VIEWPORT,
-        headless: "new"
-    });
-
-    try {
-        const title = await crawlWebtoonTitle(browser, request.titleId);
-        console.log('크롤링 결과:', {
-            requestId: request.requestId,
-            titleId: request.titleId,
-            title,
-        });
-    } finally {
-        await browser.close();
-    }
+    const body = JSON.parse(mockSQSEvent.Records[0].body);
+    
+    // 크롤러 실행 (로컬 환경)
+    const browserFactory = new LocalBrowserFactory();
+    const crawler = new Crawler(browserFactory);
+    const result = await crawler.execute(body);
+    
+    console.log('크롤링 결과:', JSON.parse(result.body));
 }
 
 runLocal().catch(console.error); 

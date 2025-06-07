@@ -1,4 +1,10 @@
 // crawler.js
+import puppeteerCore from 'puppeteer-core';
+import puppeteer from 'puppeteer';
+import chromium from '@sparticuz/chromium';
+import { WebtoonTitleStrategy } from './strategies/webtoonTitleStrategy.js';
+import { BrowserFactory } from './factories/browserFactory.js';
+
 export const DEFAULT_VIEWPORT = {
     deviceScaleFactor: 1,
     hasTouch: false,
@@ -7,6 +13,54 @@ export const DEFAULT_VIEWPORT = {
     isMobile: false,
     width: 1920,
 };
+
+export class Crawler {
+    /**
+     * @param {import('./factories/browserFactory.js').BrowserFactory} browserFactory
+     */
+    constructor(browserFactory) {
+        this.browserFactory = browserFactory;
+        this.strategies = new Map([
+            ['WEBTOON_CRAWL', new WebtoonTitleStrategy()]
+        ]);
+    }
+
+    /**
+     * 크롤링을 실행합니다.
+     * @param {Object} body - SQS 메시지 body
+     * @returns {Promise<Object>} 크롤링 결과
+     */
+    async execute(body) {
+        const browser = await this.browserFactory.createBrowser();
+        
+        try {
+            const strategy = this.strategies.get(body.eventType);
+            if (!strategy) {
+                throw new Error(`지원하지 않는 이벤트 타입입니다: ${body.eventType}`);
+            }
+
+            const result = await strategy.execute(browser, body.data);
+            return {
+                statusCode: result.statusCode,
+                body: JSON.stringify({
+                    requestId: body.requestId,
+                    ...result.data
+                })
+            };
+        } catch (error) {
+            console.error('크롤링 실패:', error);
+            return {
+                statusCode: 500,
+                body: JSON.stringify({
+                    requestId: body.requestId,
+                    error: error.message
+                })
+            };
+        } finally {
+            await browser.close();
+        }
+    }
+}
 
 /**
  * 웹툰 제목을 크롤링합니다.
