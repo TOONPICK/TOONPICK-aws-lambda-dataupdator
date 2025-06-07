@@ -6,7 +6,9 @@ services:
     volumes:
       - .:/var/task
     environment:
-      - AWS_LAMBDA_FUNCTION_MEMORY_SIZE=1600
-      - AWS_LAMBDA_FUNCTION_TIMEOUT=30
+      - AWS_LAMBDA_FUNCTION_MEMORY_SIZE=2048
+      - AWS_LAMBDA_FUNCTION_TIMEOUT=60
+      - DOCKER_LAMBDA_STAY_OPEN=1
+      - AWS_LAMBDA_FUNCTION_HANDLER=index.handler
     ports:
       - "9000:8080" 
