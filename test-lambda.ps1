@@ -1,8 +1,8 @@
 # Lambda 함수 테스트를 위한 PowerShell 스크립트
 
-# UTF-8 인코딩 설정
+# PowerShell 스크립트의 인코딩을 UTF-8로 설정
+$OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$PSDefaultParameterValues['*:Encoding'] = 'utf8'
 
 $body = @{
     url = "https://comic.naver.com/webtoon/list?titleId=747271"
@@ -16,17 +16,17 @@ Write-Host "Lambda 함수 테스트를 시작합니다..."
 Write-Host "URL: https://comic.naver.com/webtoon/list?titleId=747271"
 
 try {
-    $response = Invoke-WebRequest `
+    Start-Sleep -Seconds 2  # Lambda 컨테이너가 완전히 시작될 때까지 대기
+
+    $response = Invoke-RestMethod `
         -Uri "http://localhost:9000/2015-03-31/functions/function/invocations" `
         -Method Post `
         -Body $body `
         -Headers $headers `
-        -UseBasicParsing
+        -ContentType "application/json"
 
-    Write-Host "응답 상태: $($response.StatusCode)"
     Write-Host "응답 내용:"
-    $responseContent = $response.Content | ConvertFrom-Json
-    $responseContent | ConvertTo-Json -Depth 10
+    $response | ConvertTo-Json -Depth 10
 } catch {
     Write-Host "오류 발생: $_"
     Write-Host "상세 오류: $($_.Exception.Message)"
