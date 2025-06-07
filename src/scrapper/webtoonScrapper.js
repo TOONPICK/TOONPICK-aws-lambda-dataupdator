@@ -1,6 +1,11 @@
 import { BaseScrapper } from './baseScrapper.js';
 
 export class WebtoonScrapper extends BaseScrapper {
+    /**
+     * @param {import('puppeteer-core').Browser} browser
+     * @param {import('../types/webtoon.js').WebtoonData} data
+     * @returns {Promise<{statusCode: number, data: import('../types/webtoon.js').WebtoonScrapResult}>}
+     */
     async execute(browser, data) {
         const page = await browser.newPage();
         try {
