@@ -20,7 +20,10 @@ export class WebtoonScrapper extends BaseScrapper {
 
             return {
                 statusCode: 200,
-                data: { title }
+                data: { 
+                    title,
+                    platform: 'NAVER'
+                }
             };
         } finally {
             await page.close();

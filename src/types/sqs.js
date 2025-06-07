@@ -36,6 +36,7 @@
 /**
  * @typedef {Object} CrawlRequest
  * @property {string} requestId - 요청을 추적하기 위한 고유 ID
+ * @property {SQSEventType} eventType - 이벤트 타입
  * @property {Object} data - 크롤링에 필요한 데이터
  */
 
@@ -57,6 +58,7 @@ export function parseCrawlRequest(sqsRecord) {
 
         return {
             requestId: requestMessage.requestId || sqsRecord.messageId,
+            eventType: requestMessage.eventType,
             data: requestMessage.data
         };
     } catch (error) {
