@@ -1,7 +1,0 @@
-const EventTypes = {
-  WEBTOON_TITLE: 'WEBTOON_TITLE',
-  WEBTOON_EPISODE: 'WEBTOON_EPISODE',
-  WEBTOON_COMMENT: 'WEBTOON_COMMENT'
-};
-
-module.exports = EventTypes; 
