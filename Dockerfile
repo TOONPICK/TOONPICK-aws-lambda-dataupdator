@@ -26,8 +26,11 @@ RUN yum install -y \
 COPY package*.json ${LAMBDA_TASK_ROOT}/
 RUN npm install
 
-# Copy function code
-COPY index.js ${LAMBDA_TASK_ROOT}/
+# Copy source code
+COPY src/ ${LAMBDA_TASK_ROOT}/src/
+COPY config/ ${LAMBDA_TASK_ROOT}/config/
+COPY services/ ${LAMBDA_TASK_ROOT}/services/
+COPY utils/ ${LAMBDA_TASK_ROOT}/utils/
 
 # Set the CMD to your handler
-CMD [ "index.handler" ] 
+CMD [ "src/handler.handler" ] 
