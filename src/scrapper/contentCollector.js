@@ -5,15 +5,16 @@
  */
 
 /**
- * 스크래퍼 기본 클래스
+ * 컨텐츠 수집기 기본 클래스
+ * 브릿지 패턴의 Abstraction 역할
  * @abstract
  */
-export class BaseScrapper {
+export class ContentCollector {
     /**
-     * 스크래핑을 실행합니다.
+     * 컨텐츠 수집을 실행합니다.
      * @param {import('puppeteer-core').Browser} browser - Puppeteer 브라우저 인스턴스
-     * @param {Object} data - 스크래핑할 데이터
-     * @returns {Promise<ScrapResult>} 스크래핑 결과
+     * @param {Object} data - 수집할 데이터 정보
+     * @returns {Promise<ScrapResult>} 수집 결과
      */
     async execute(browser, data) {
         throw new Error('execute 메서드를 구현해야 합니다.');

@@ -1,4 +1,4 @@
-import { WebtoonScrapper } from '../scrapper/webtoonScrapper.js';
+import { CollectorFactory } from '../scrapper/collectorFactory.js';
 
 export class Crawler {
     /**
@@ -6,9 +6,7 @@ export class Crawler {
      */
     constructor(browserType) {
         this.browserType = browserType;
-        this.scrappers = new Map([
-            ['WEBTOON_CRAWL', new WebtoonScrapper()]
-        ]);
+        this.collectorFactory = new CollectorFactory();
     }
 
     /**
@@ -29,12 +27,9 @@ export class Crawler {
         });
         
         try {
-            const scrapper = this.scrappers.get(body.eventType);
-            if (!scrapper) {
-                throw new Error(`지원하지 않는 이벤트 타입입니다: ${body.eventType}`);
-            }
-
-            const result = await scrapper.execute(browser, body.data);
+            const collector = this.collectorFactory.createCollector(body.eventType);
+            const result = await collector.execute(browser, body.data);
+            
             return {
                 statusCode: result.statusCode,
                 body: JSON.stringify({

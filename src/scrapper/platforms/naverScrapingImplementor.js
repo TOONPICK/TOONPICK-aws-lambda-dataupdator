@@ -1,6 +1,6 @@
-import { PlatformScrapper } from './platformScrapper.js';
+import { ScrapingImplementor } from './scrapingImplementor.js';
 
-export class NaverScrapper extends PlatformScrapper {
+export class NaverScrapingImplementor extends ScrapingImplementor {
     async scrapTitle(page, titleId) {
         await page.goto(this.getWebtoonUrl(titleId), {
             waitUntil: 'networkidle2',

@@ -1,8 +1,9 @@
 /**
- * 플랫폼별 스크래퍼 인터페이스
+ * 스크래핑 구현체 인터페이스
+ * 브릿지 패턴의 Implementor 역할
  * @interface
  */
-export class PlatformScrapper {
+export class ScrapingImplementor {
     /**
      * 웹툰 제목을 스크래핑합니다.
      * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
