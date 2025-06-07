@@ -1,9 +1,4 @@
-// crawler.js
-import puppeteerCore from 'puppeteer-core';
-import puppeteer from 'puppeteer';
-import chromium from '@sparticuz/chromium';
 import { WebtoonTitleStrategy } from './strategies/webtoonTitleStrategy.js';
-import { BrowserFactory } from './factories/browserFactory.js';
 
 export const DEFAULT_VIEWPORT = {
     deviceScaleFactor: 1,

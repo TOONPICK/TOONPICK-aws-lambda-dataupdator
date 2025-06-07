@@ -13,10 +13,19 @@ export const DEFAULT_VIEWPORT = {
  */
 export class BrowserFactory {
     /**
+     * @param {import('../browsers/browserTypes.js').BrowserType} browserType
+     */
+    constructor(browserType) {
+        this.browserType = browserType;
+    }
+
+    /**
      * 브라우저를 생성합니다.
-     * @returns {Promise<import('puppeteer').Browser>}
+     * @returns {Promise<import('puppeteer-core').Browser>}
      */
     async createBrowser() {
-        throw new Error('createBrowser 메서드를 구현해야 합니다.');
+        return this.browserType.launch({
+            defaultViewport: DEFAULT_VIEWPORT
+        });
     }
 } 
