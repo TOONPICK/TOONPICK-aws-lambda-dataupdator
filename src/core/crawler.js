@@ -1,4 +1,5 @@
 import { WebtoonScrapper } from '../scrapper/webtoonScrapper.js';
+import { DEFAULT_VIEWPORT } from '../config/browser.js';
 
 export class Crawler {
     /**
@@ -13,32 +14,25 @@ export class Crawler {
 
     /**
      * 크롤링을 실행합니다.
-     * @param {Object} body - SQS 메시지 body
+     * @param {import('../types/sqs.js').CrawlRequest} request - 크롤링 요청
      * @returns {Promise<Object>} 크롤링 결과
      */
-    async execute(body) {
+    async execute(request) {
         const browser = await this.browserType.launch({
-            defaultViewport: {
-                deviceScaleFactor: 1,
-                hasTouch: false,
-                height: 1080,
-                isLandscape: true,
-                isMobile: false,
-                width: 1920,
-            }
+            defaultViewport: DEFAULT_VIEWPORT
         });
         
         try {
-            const scrapper = this.scrappers.get(body.eventType);
+            const scrapper = this.scrappers.get('WEBTOON_CRAWL');
             if (!scrapper) {
-                throw new Error(`지원하지 않는 이벤트 타입입니다: ${body.eventType}`);
+                throw new Error('스크래퍼를 찾을 수 없습니다.');
             }
 
-            const result = await scrapper.execute(browser, body.data);
+            const result = await scrapper.execute(browser, request.data);
             return {
                 statusCode: result.statusCode,
                 body: JSON.stringify({
-                    requestId: body.requestId,
+                    requestId: request.requestId,
                     ...result.data
                 })
             };
@@ -47,7 +41,7 @@ export class Crawler {
             return {
                 statusCode: 500,
                 body: JSON.stringify({
-                    requestId: body.requestId,
+                    requestId: request.requestId,
                     error: error.message
                 })
             };
