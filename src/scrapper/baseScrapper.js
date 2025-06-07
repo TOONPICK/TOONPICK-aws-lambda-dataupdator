@@ -5,14 +5,14 @@
  */
 
 /**
- * 스크래퍼 기본 인터페이스
- * @interface
+ * 스크래퍼 기본 클래스
+ * @abstract
  */
 export class BaseScrapper {
     /**
      * 스크래핑을 실행합니다.
      * @param {import('puppeteer-core').Browser} browser - Puppeteer 브라우저 인스턴스
-     * @param {Object} data - 스크래핑에 필요한 데이터
+     * @param {Object} data - 스크래핑할 데이터
      * @returns {Promise<ScrapResult>} 스크래핑 결과
      */
     async execute(browser, data) {
