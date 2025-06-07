@@ -7,6 +7,7 @@ New-Item -ItemType Directory -Force -Path dist/src/browsers
 New-Item -ItemType Directory -Force -Path dist/src/config
 New-Item -ItemType Directory -Force -Path dist/src/core
 New-Item -ItemType Directory -Force -Path dist/src/scrapper
+New-Item -ItemType Directory -Force -Path dist/src/scrapper/platforms
 New-Item -ItemType Directory -Force -Path dist/src/types
 New-Item -ItemType Directory -Force -Path dist/src/utils
 
@@ -35,7 +36,8 @@ Copy-Item -Path index.js -Destination dist
 Copy-Item -Path src/browsers/* -Destination dist/src/browsers
 Copy-Item -Path src/config/* -Destination dist/src/config
 Copy-Item -Path src/core/* -Destination dist/src/core
-Copy-Item -Path src/scrapper/* -Destination dist/src/scrapper
+Copy-Item -Path src/scrapper/*.js -Destination dist/src/scrapper
+Copy-Item -Path src/scrapper/platforms/* -Destination dist/src/scrapper/platforms
 Copy-Item -Path src/types/* -Destination dist/src/types
 Copy-Item -Path src/utils/* -Destination dist/src/utils
 
