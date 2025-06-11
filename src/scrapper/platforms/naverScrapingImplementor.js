@@ -83,42 +83,92 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
 
     async scrapAuthors(page) {
         const authors = [];
-        const authorElements = await page.$$('.ContentMetaInfo__meta_info--GbTg4');
+        
+        await page.waitForSelector('.ContentMetaInfo__meta_info--GbTg4', { timeout: 5000 });
+        
+        const authorContainers = await page.$$('.ContentMetaInfo__meta_info--GbTg4');
 
-        for (const element of authorElements) {
-            const categoryElements = await element.$$('.ContentMetaInfo__category--WwrCp');
+        for (const container of authorContainers) {
+            const categoryElements = await container.$$('.ContentMetaInfo__category--WwrCp');
             
             for (const category of categoryElements) {
-                const linkTag = await category.$('a');
-                const href = await linkTag.evaluate(el => el.getAttribute('href'));
-                const name = await linkTag.evaluate(el => el.textContent.trim());
-                
-                let authorId;
-                let url;
-                
-                if (href.includes('artistTitle')) {
-                    const match = href.match(/id=(\d+)/);
-                    authorId = match ? match[1] : null;
-                    url = href;
-                } else if (href.includes('community')) {
-                    const match = href.match(/u\/([^?]+)/);
-                    authorId = match ? match[1] : null;
-                    url = href.split('?')[0];
-                } else {
-                    console.warn('알 수 없는 구조의 링크:', href);
-                    continue;
-                }
+                try {
+                    await page.waitForSelector('a', { timeout: 1000 });
+                    const linkTag = await category.$('a');
+                    if (!linkTag) continue;
 
-                const roleText = await category.evaluate(el => el.textContent.trim().split(' ').pop());
-                const roleMap = {
-                    '작가': 'AUTHOR',
-                    '글': 'WRITER',
-                    '그림': 'ILLUSTRATOR'
-                };
-                const role = roleMap[roleText] || null;
+                    const href = await linkTag.evaluate(el => el.getAttribute('href'));
+                    const name = await linkTag.evaluate(el => el.textContent.trim());
+                    
+                    let authorId = null;
+                    if (href.includes('artistTitle')) {
+                        const match = href.match(/id=(\d+)/);
+                        authorId = match ? match[1] : null;
+                    } else if (href.includes('community')) {
+                        const match = href.match(/u\/([^?]+)/);
+                        authorId = match ? match[1] : null;
+                    } else {
+                        console.warn('알 수 없는 구조의 링크:', href);
+                        continue;
+                    }
 
-                if (role) {
-                    authors.push({ id: authorId, name, role });
+                    const fullText = await category.evaluate(el => el.textContent.trim());
+                    
+                    let roleText = '';
+                    const parts = fullText.split(/\s+/);
+                    for (const part of parts) {
+                        if (part !== name) {
+                            roleText += part;
+                        }
+                    }
+                    roleText = roleText.trim();
+
+                    const combinedRoleMap = {
+                        '글/그림': 'WRITER_AND_ILLUSTRATOR',
+                        '그림/글': 'WRITER_AND_ILLUSTRATOR',
+                        '글/원작': 'WRITER_AND_ORIGINAL',
+                        '원작/글': 'WRITER_AND_ORIGINAL',
+                        '그림/원작': 'ILLUSTRATOR_AND_ORIGINAL',
+                        '원작/그림': 'ILLUSTRATOR_AND_ORIGINAL',
+
+                        '글/그림/원작': 'WRITER_AND_ILLUSTRATOR_AND_ORIGINAL',
+                        '글/원작/그림': 'WRITER_AND_ILLUSTRATOR_AND_ORIGINAL',
+                        '그림/글/원작': 'WRITER_AND_ILLUSTRATOR_AND_ORIGINAL',
+                        '그림/원작/글': 'WRITER_AND_ILLUSTRATOR_AND_ORIGINAL',
+                        '원작/글/그림': 'WRITER_AND_ILLUSTRATOR_AND_ORIGINAL',
+                        '원작/그림/글': 'WRITER_AND_ILLUSTRATOR_AND_ORIGINAL'
+                    };
+
+                    const singleRoleMap = {
+                        '글': 'WRITER',
+                        '그림': 'ILLUSTRATOR',
+                        '원작': 'ORIGINAL',
+                        '작가': 'AUTHOR'
+                    };
+
+                    let role = null;
+                    
+                    for (const [key, value] of Object.entries(combinedRoleMap)) {
+                        if (roleText.includes(key)) {
+                            role = value;
+                            break;
+                        }
+                    }
+
+                    if (!role) {
+                        for (const [key, value] of Object.entries(singleRoleMap)) {
+                            if (roleText.includes(key)) {
+                                role = value;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (role && authorId && name) {
+                        authors.push({ id: authorId, name, role });
+                    }
+                } catch (error) {
+                    console.error('작가 정보 추출 중 오류:', error);
                 }
             }
         }
