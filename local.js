@@ -11,7 +11,7 @@ async function main() {
                     requestId: 'test-1',
                     eventType: 'WEBTOON_CRAWL',
                     data: {
-                        titleId: '183559',  // 네이버 웹툰 "신의 탑"
+                        titleId: '747269',
                         platform: 'NAVER'
                     }
                 })
