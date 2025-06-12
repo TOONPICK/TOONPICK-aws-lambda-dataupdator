@@ -5,12 +5,21 @@
  */
 export class ScrapingImplementor {
     /**
+     * 웹툰 페이지를 로드하고 필요한 요소들이 로드될 때까지 대기합니다.
+     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
+     * @param {string} titleId - 웹툰의 고유 ID
+     * @returns {Promise<void>}
+     */
+    async loadPage(page, titleId) {
+        throw new Error('loadPage 메서드를 구현해야 합니다.');
+    }
+
+    /**
      * 웹툰 제목을 스크래핑합니다.
      * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
-     * @param {string} titleId - 웹툰 ID
      * @returns {Promise<string>} 웹툰 제목
      */
-    async scrapTitle(page, titleId) {
+    async scrapTitle(page) {
         throw new Error('scrapTitle 메서드를 구현해야 합니다.');
     }
 

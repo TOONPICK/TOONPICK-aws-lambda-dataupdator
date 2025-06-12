@@ -55,7 +55,7 @@ export class WebtoonContentCollector extends ContentCollector {
             // HTML 추출
             const html = await implementor.extractHtml(page);
 
-            // 모든 무료 회차 정보 수집
+            // 모든 회차 정보 수집
             const freeEpisodes = await implementor.scrapFreeEpisodes(page);
 
             // HTML 파일 저장
