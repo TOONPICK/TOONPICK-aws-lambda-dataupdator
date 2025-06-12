@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@sparticuz/chromium": "^109.0.5",
+    "prettier": "^3.5.3",
     "puppeteer-core": "^21.0.0"
   },
   "devDependencies": {

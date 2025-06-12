@@ -121,4 +121,13 @@ export class ScrapingImplementor {
     getWebtoonUrl(titleId) {
         throw new Error('getWebtoonUrl 메서드를 구현해야 합니다.');
     }
+
+    /**
+     * 현재 페이지의 HTML을 추출합니다.
+     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
+     * @returns {Promise<string>} 페이지의 HTML 내용
+     */
+    async extractHtml(page) {
+        throw new Error('extractHtml 메서드를 구현해야 합니다.');
+    }
 } 
