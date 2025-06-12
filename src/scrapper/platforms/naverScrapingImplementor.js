@@ -251,4 +251,31 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
         // HTML 포맷팅
         return await HtmlFormatter.format(html);
     }
+
+    /**
+     * 웹툰의 미리보기 개수를 추출합니다.
+     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
+     * @returns {Promise<number>} 미리보기 개수
+     */
+    async scrapPreviewCount(page) {
+        try {
+            // 미리보기 텍스트 영역이 로드될 때까지 대기
+            await page.waitForSelector('.EpisodeListPreview__text_area--WMXZz', { timeout: 10000 });
+
+            // strong 태그 내의 숫자를 추출
+            const previewCount = await page.evaluate(() => {
+                const element = document.querySelector('.EpisodeListPreview__text_area--WMXZz strong');
+                if (!element) return 0;
+                
+                // "6개" 형태의 텍스트에서 숫자만 추출
+                const count = parseInt(element.textContent.replace(/[^0-9]/g, ''));
+                return isNaN(count) ? 0 : count;
+            });
+
+            return previewCount;
+        } catch (error) {
+            console.error('미리보기 개수 추출 중 오류 발생:', error);
+            return 0;
+        }
+    }
 } 
