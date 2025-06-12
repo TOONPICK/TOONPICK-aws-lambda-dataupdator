@@ -178,4 +178,19 @@ export class ScrapingImplementor {
     async scrapFreeEpisodes(page) {
         throw new Error('scrapFreeEpisodes 메서드를 구현해야 합니다.');
     }
+
+    /**
+     * 웹툰의 관련 웹소설 정보를 스크래핑합니다.
+     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
+     * @returns {Promise<Array<{
+     *   title: string,
+     *   link: string,
+     *   thumbnailUrl: string,
+     *   type: 'ORIGINAL' | 'BOOK',
+     *   freeEpisodeCount?: number
+     * }>>} 관련 웹소설 정보 목록
+     */
+    async scrapRelatedNovels(page) {
+        throw new Error('scrapRelatedNovels 메서드를 구현해야 합니다.');
+    }
 } 

@@ -55,6 +55,9 @@ export class WebtoonContentCollector extends ContentCollector {
             const freeEpisodes = await implementor.scrapFreeEpisodes(page);
             const paidEpisodes = await implementor.scrapPaidEpisodes(page);
 
+            // 관련 상품 정보 수집
+            const relatedNovels = await implementor.scrapRelatedNovels(page);
+
             // 날짜 정보 수집
             const publishStartDate = await implementor.scrapPublishStartDate(page);
             const lastUpdatedDate = await implementor.scrapLastUpdatedDate(page);
@@ -82,7 +85,8 @@ export class WebtoonContentCollector extends ContentCollector {
                     lastUpdatedDate,
                     htmlFilePath,
                     freeEpisodes,
-                    paidEpisodes
+                    paidEpisodes,
+                    relatedNovels
                 }
             };
         } finally {
