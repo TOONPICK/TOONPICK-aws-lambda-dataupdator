@@ -25,8 +25,11 @@ export class WebtoonContentCollector extends ContentCollector {
 
         const page = await browser.newPage();
         try {
+            // 페이지 로드
+            await implementor.loadPage(page, titleId);
+            
             // 기본 정보 수집
-            const title = await implementor.scrapTitle(page, titleId);
+            const title = await implementor.scrapTitle(page);
             const uniqueId = await implementor.scrapUniqueId(page);
             const description = await implementor.scrapDescription(page);
             const thumbnailUrl = await implementor.scrapThumbnailUrl(page);
@@ -49,7 +52,7 @@ export class WebtoonContentCollector extends ContentCollector {
             const publishStartDate = await implementor.scrapPublishStartDate(page);
             const lastUpdatedDate = await implementor.scrapLastUpdatedDate(page);
 
-            // HTML 추출 및 저장
+            // HTML 추출
             const html = await implementor.extractHtml(page);
 
             // 모든 무료 회차 정보 수집

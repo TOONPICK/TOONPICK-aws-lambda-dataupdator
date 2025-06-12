@@ -2,11 +2,41 @@ import { ScrapingImplementor } from './scrapingImplementor.js';
 import { HtmlFormatter } from '../../utils/htmlFormatter.js';
 
 export class NaverScrapingImplementor extends ScrapingImplementor {
-    async scrapTitle(page, titleId) {
+    #currentTitleId = null;
+
+    /**
+     * 웹툰 페이지를 로드합니다.
+     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
+     * @param {string} titleId - 웹툰의 고유 ID
+     */
+    async loadPage(page, titleId) {
+        if (this.#currentTitleId === titleId) {
+            return; // 이미 같은 페이지에 있으면 스킵
+        }
+
         await page.goto(this.getWebtoonUrl(titleId), {
             waitUntil: 'networkidle2',
         });
+        this.#currentTitleId = titleId;
 
+        // 필수 요소들이 로드될 때까지 대기
+        await Promise.all([
+            page.waitForSelector('.EpisodeListInfo__title--mYLjC', { timeout: 10000 }),
+            page.waitForSelector('.EpisodeListList__item--M8zq4', { timeout: 10000 }),
+            page.waitForSelector('.EpisodeListInfo__summary_wrap--ZWNW5', { timeout: 10000 })
+        ]);
+
+        // React 렌더링이 완료될 때까지 추가로 대기
+        await page.waitForTimeout(2000);
+
+        // 스크롤을 조금 내려서 지연 로딩되는 컨텐츠들을 불러옴
+        await page.evaluate(() => {
+            window.scrollBy(0, 500);
+            return new Promise(resolve => setTimeout(resolve, 1000));
+        });
+    }
+
+    async scrapTitle(page) {
         return await page.$eval(
             'h2.EpisodeListInfo__title--mYLjC',
             (el) => el.textContent.trim()
@@ -224,20 +254,6 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
     }
 
     async extractHtml(page) {
-        // 페이지가 완전히 로드될 때까지 기다림
-        await page.waitForSelector('.EpisodeListInfo__title--mYLjC', { timeout: 10000 }); // 웹툰 제목
-        await page.waitForSelector('.EpisodeListList__item--M8zq4', { timeout: 10000 }); // 에피소드 목록
-        await page.waitForSelector('.EpisodeListInfo__summary_wrap--ZWNW5', { timeout: 10000 }); // 웹툰 설명
-
-        // React 렌더링이 완료될 때까지 추가로 대기
-        await page.waitForTimeout(2000);
-
-        // 스크롤을 조금 내려서 지연 로딩되는 컨텐츠들을 불러옴
-        await page.evaluate(() => {
-            window.scrollBy(0, 500);
-            return new Promise(resolve => setTimeout(resolve, 1000));
-        });
-
         const html = await page.evaluate(() => {
             // style 태그 제거
             const styleElements = document.querySelectorAll('style');
