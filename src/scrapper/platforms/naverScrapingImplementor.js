@@ -33,6 +33,14 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
         PREVIEW_BUTTON: '.EpisodeListPreview__button_preview--IBGaa',
         PREVIEW_COUNT: '.EpisodeListPreview__text_area--WMXZz strong',
         
+        // 관련 상품 정보
+        PRODUCT_LIST: '.AsideProductList__product_list--yMw4n',
+        PRODUCT_ITEM: '.AsideProductList__item--riayO',
+        PRODUCT_LINK: '.Poster__link--sopnC',
+        PRODUCT_TITLE: '.AsideProductList__title--TXUE9',
+        PRODUCT_THUMBNAIL: '.Poster__image--d9XTI',
+        PRODUCT_INFO: '.AsideProductList__price--UYuzI',
+        
         // 기타
         GENRE_TAG: '.TagGroup__tag--xu0OH',
         GENRE_EXPAND_BUTTON: '.EpisodeListInfo__button_fold--ZKgEw',
@@ -771,5 +779,82 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
 
         const [, year, month, day] = dateMatch;
         return `20${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    /**
+     * 웹툰의 관련 웹소설 정보를 스크래핑합니다.
+     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
+     * @returns {Promise<Array<{
+     *   title: string,
+     *   link: string,
+     *   thumbnailUrl: string,
+     *   type: 'ORIGINAL' | 'BOOK',
+     *   freeEpisodeCount?: number
+     * }>>} 관련 웹소설 정보 목록
+     */
+    async scrapRelatedNovels(page) {
+        try {
+            await page.waitForSelector(this.#SELECTORS.PRODUCT_LIST, { timeout: 5000 });
+
+            return await page.evaluate(
+                (selectors) => {
+                    const novels = [];
+                    const items = document.querySelectorAll(selectors.PRODUCT_ITEM);
+
+                    for (const item of items) {
+                        const linkElement = item.querySelector(selectors.PRODUCT_LINK);
+                        const titleElement = item.querySelector(selectors.PRODUCT_TITLE);
+                        const thumbnailElement = item.querySelector(selectors.PRODUCT_THUMBNAIL);
+                        const infoElement = item.querySelector(selectors.PRODUCT_INFO);
+
+                        // 펀딩 상품 제외
+                        if (infoElement?.textContent.includes('펀딩')) {
+                            continue;
+                        }
+
+                        // 웹소설 관련 상품만 포함
+                        if (!titleElement?.textContent.toLowerCase().includes('웹소설')) {
+                            continue;
+                        }
+
+                        const title = titleElement.textContent.trim()
+                            .replace(/웹소설\s+/, '')  // "웹소설" 텍스트 제거
+                            .replace(/[<>]/g, '')      // < > 기호 제거
+                            .trim();
+                        
+                        const link = linkElement?.getAttribute('href');
+                        const thumbnailUrl = thumbnailElement?.getAttribute('src');
+                        
+                        // 상품 타입 결정 (단행본 여부)
+                        const type = title.includes('[단행본]') ? 'BOOK' : 'ORIGINAL';
+                        
+                        // 무료 회차 수 추출
+                        let freeEpisodeCount = null;
+                        const infoText = infoElement?.textContent.trim();
+                        if (infoText) {
+                            const match = infoText.match(/(\d+)화 무료/);
+                            if (match) {
+                                freeEpisodeCount = parseInt(match[1]);
+                            }
+                        }
+
+                        if (title && link && thumbnailUrl) {
+                            novels.push({
+                                title,
+                                link,
+                                thumbnailUrl,
+                                type,
+                                ...(freeEpisodeCount !== null && { freeEpisodeCount })
+                            });
+                        }
+                    }
+
+                    return novels;
+                },
+                this.#SELECTORS
+            );
+        } catch (error) {
+            throw new Error(`관련 웹소설 정보 추출 실패: ${error.message}`);
+        }
     }
 } 
