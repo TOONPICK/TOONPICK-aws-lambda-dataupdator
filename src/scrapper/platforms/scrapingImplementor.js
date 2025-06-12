@@ -130,4 +130,13 @@ export class ScrapingImplementor {
     async extractHtml(page) {
         throw new Error('extractHtml 메서드를 구현해야 합니다.');
     }
+
+    /**
+     * 웹툰의 미리보기 개수를 추출합니다.
+     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
+     * @returns {Promise<number>} 미리보기 개수
+     */
+    async scrapPreviewCount(page) {
+        throw new Error('scrapPreviewCount 메서드를 구현해야 합니다.');
+    }
 } 

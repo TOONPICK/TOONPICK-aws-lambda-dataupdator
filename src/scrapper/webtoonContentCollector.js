@@ -36,7 +36,7 @@ export class WebtoonContentCollector extends ContentCollector {
             const status = await implementor.scrapStatus(page);
             const ageRating = await implementor.scrapAgeRating(page);
             const episodeCount = await implementor.scrapEpisodeCount(page);
-
+            const previewCount = await implementor.scrapPreviewCount(page);
             
             // 장르 및 작가 정보 수집
             const genres = await implementor.scrapGenres(page);
@@ -62,6 +62,7 @@ export class WebtoonContentCollector extends ContentCollector {
                     status,
                     ageRating,
                     episodeCount,
+                    previewCount,
                     genres,
                     authors,
                     publishStartDate,
