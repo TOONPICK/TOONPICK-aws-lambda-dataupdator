@@ -44,7 +44,12 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
         // 기타
         GENRE_TAG: '.TagGroup__tag--xu0OH',
         GENRE_EXPAND_BUTTON: '.EpisodeListInfo__button_fold--ZKgEw',
-        HIATUS_INFO: '.EpisodeListInfo__info_text--MO6kz'
+        HIATUS_INFO: '.EpisodeListInfo__info_text--MO6kz',
+        
+        // 연관 웹툰 관련
+        RELATED_WEBTOONS: '.AsideList__content_list--FXDvm',
+        RELATED_WEBTOON_ITEM: '.AsideList__item--i30ly',
+        RELATED_WEBTOON_LINK: '.Poster__link--sopnC',
     };
 
     /**
@@ -855,6 +860,37 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
             );
         } catch (error) {
             throw new Error(`관련 웹소설 정보 추출 실패: ${error.message}`);
+        }
+    }
+
+    /**
+     * 연관된 웹툰들의 ID를 스크래핑합니다.
+     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
+     * @returns {Promise<string[]>} 연관 웹툰 ID 목록
+     * @throws {Error} 연관 웹툰 ID 추출 실패 시 에러
+     */
+    async scrapRelatedWebtoonIds(page) {
+        try {
+            await page.waitForSelector(this.#SELECTORS.RELATED_WEBTOONS, { timeout: 5000 });
+
+            return await page.evaluate((selectors) => {
+                const relatedWebtoons = document.querySelectorAll(selectors.RELATED_WEBTOON_ITEM);
+                const ids = [];
+
+                for (const webtoon of relatedWebtoons) {
+                    const link = webtoon.querySelector(selectors.RELATED_WEBTOON_LINK)?.getAttribute('href');
+                    if (link) {
+                        const match = link.match(/titleId=(\d+)/);
+                        if (match) {
+                            ids.push(match[1]);
+                        }
+                    }
+                }
+
+                return ids;
+            }, this.#SELECTORS);
+        } catch (error) {
+            throw new Error(`연관 웹툰 ID 추출 실패: ${error.message}`);
         }
     }
 } 

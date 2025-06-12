@@ -193,4 +193,14 @@ export class ScrapingImplementor {
     async scrapRelatedNovels(page) {
         throw new Error('scrapRelatedNovels 메서드를 구현해야 합니다.');
     }
+
+    /**
+     * 연관된 웹툰들의 ID를 스크래핑합니다.
+     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
+     * @returns {Promise<string[]>} 연관 웹툰 ID 목록
+     * @throws {Error} 연관 웹툰 ID 추출 실패 시 에러
+     */
+    async scrapRelatedWebtoonIds(page) {
+        throw new Error('Not implemented');
+    }
 } 
