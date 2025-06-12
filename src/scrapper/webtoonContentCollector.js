@@ -57,6 +57,7 @@ export class WebtoonContentCollector extends ContentCollector {
 
             // 관련 상품 정보 수집
             const relatedNovels = await implementor.scrapRelatedNovels(page);
+            const relatedWebtoonIds = await implementor.scrapRelatedWebtoonIds(page);
 
             // 날짜 정보 수집
             const publishStartDate = await implementor.scrapPublishStartDate(page);
@@ -86,7 +87,8 @@ export class WebtoonContentCollector extends ContentCollector {
                     htmlFilePath,
                     freeEpisodes,
                     paidEpisodes,
-                    relatedNovels
+                    relatedNovels,
+                    relatedWebtoonIds
                 }
             };
         } finally {
