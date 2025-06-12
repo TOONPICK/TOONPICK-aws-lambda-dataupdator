@@ -625,4 +625,85 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
         const [year, month, day] = dateStr.split('.');
         return `20${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     }
+
+    /**
+     * 웹툰의 유료 회차 정보를 수집합니다.
+     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
+     * @returns {Promise<Array<{
+     *   title: string,
+     *   uploadDate: string | null,
+     *   daysUntilFree: number | null,
+     *   link: string,
+     *   episodeNumber: number,
+     *   thumbnailUrl: string
+     * }>>} 유료 회차 정보 목록
+     * @throws {Error} 유료 회차 정보 추출 실패 시 에러
+     */
+    async scrapPaidEpisodes(page) {
+        try {
+            // 총 에피소드 수 가져오기
+            const totalEpisodes = await this.scrapEpisodeCount(page);
+            if (!totalEpisodes) {
+                throw new Error('총 에피소드 수를 가져올 수 없습니다.');
+            }
+
+            // 미리보기 버튼 찾기 및 클릭
+            const previewButton = await page.$('.EpisodeListPreview__button_preview--IBGaa');
+            if (!previewButton) {
+                return [];
+            }
+
+            await previewButton.click();
+            await page.waitForSelector('.EpisodeListList__episode_list--_N3ks', { timeout: 5000 });
+
+            // 유료 회차 목록 추출
+            const rawEpisodes = await page.evaluate(() => {
+                const paidItems = Array.from(document.querySelectorAll('li.EpisodeListList__item--M8zq4.EpisodeListList__bm--HDC0X'));
+                return paidItems.map(item => {
+                    const titleElement = item.querySelector('.EpisodeListList__title--lfIzU');
+                    const dateElement = item.querySelector('.date');
+                    const linkElement = item.querySelector('a');
+                    const thumbnailElement = item.querySelector('img');
+
+                    if (!titleElement || !dateElement || !linkElement) return null;
+
+                    const link = linkElement.getAttribute('href');
+                    const dateText = dateElement.textContent.trim();
+                    
+                    // "X일 후 무료" 형식 처리
+                    const daysMatch = dateText.match(/(\d+)일 후 무료/);
+                    const daysUntilFree = daysMatch ? parseInt(daysMatch[1]) : null;
+
+                    return {
+                        title: titleElement.textContent.trim(),
+                        dateText: dateText,
+                        daysUntilFree: daysUntilFree,
+                        link: `https://comic.naver.com${link}`,
+                        thumbnailUrl: thumbnailElement ? thumbnailElement.getAttribute('src') : null
+                    };
+                }).filter(episode => episode !== null);
+            });
+
+            // 날짜 정보 처리 및 에피소드 번호 부여
+            return rawEpisodes.map((episode, index) => {
+                const { dateText, daysUntilFree, ...rest } = episode;
+                
+                // 실제 날짜가 있는 경우 (과거 유료 회차가 무료로 전환된 경우)
+                const dateMatch = dateText.match(/\d{2}\.\d{2}\.\d{2}/);
+                const uploadDate = dateMatch ? this.#formatDate(dateText) : null;
+
+                // 최신화부터 내림차순으로 번호 부여
+                const episodeNumber = totalEpisodes - index;
+
+                return {
+                    ...rest,
+                    uploadDate,
+                    daysUntilFree,
+                    episodeNumber
+                };
+            });
+        } catch (error) {
+            throw new Error(`유료 회차 정보 추출 실패: ${error.message}`);
+        }
+    }
 } 
