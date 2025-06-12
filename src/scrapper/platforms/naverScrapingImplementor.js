@@ -529,16 +529,29 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
     /**
      * 웹툰의 마지막 업데이트 날짜를 추출합니다.
      * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
-     * @returns {Promise<string>} 마지막 업데이트 날짜 (YYYY-MM-DD 형식)
+     * @returns {Promise<string|null>} 마지막 업데이트 날짜 (YYYY-MM-DD 형식)
      * @throws {Error} 업데이트 날짜 추출 실패 시 에러
      */
     async scrapLastUpdatedDate(page) {
         try {
+            await page.waitForSelector(this.#SELECTORS.EPISODE_ITEM, { timeout: 10000 });
             const firstItem = await page.$(this.#SELECTORS.EPISODE_ITEM);
-            if (!firstItem) return null;
+            if (!firstItem) {
+                return null;
+            }
 
-            const dateText = await firstItem.$eval('.date', el => el.textContent.trim());
-            return this.#formatDate(dateText);
+            const dateText = await firstItem.$eval(this.#SELECTORS.EPISODE_DATE, el => el.textContent.trim());
+            if (!dateText) {
+                return null;
+            }
+
+            // YY.MM.DD 형식의 날짜만 처리
+            const dateMatch = dateText.match(/\d{2}\.\d{2}\.\d{2}/);
+            if (!dateMatch) {
+                return null;
+            }
+
+            return this.#formatDate(dateMatch[0]);
         } catch (error) {
             throw new Error(`마지막 업데이트 날짜 추출 실패: ${error.message}`);
         }
@@ -553,15 +566,26 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
     async scrapPublishStartDate(page) {
         try {
             const currentUrl = await page.url();
+            const currentTitleId = this.#currentTitleId;
+
+            // 첫 화 페이지로 이동
+            await this.loadPage(page, currentTitleId);
             await page.goto(`${currentUrl}&page=1&sort=ASC`);
+            await page.waitForSelector(this.#SELECTORS.EPISODE_ITEM, { timeout: 10000 });
 
             const firstItem = await page.$(this.#SELECTORS.EPISODE_ITEM);
-            if (!firstItem) return null;
+            if (!firstItem) {
+                throw new Error('첫 화 정보를 찾을 수 없습니다.');
+            }
 
-            const dateText = await firstItem.$eval('.date', el => el.textContent.trim());
+            const dateText = await firstItem.$eval(this.#SELECTORS.EPISODE_DATE, el => el.textContent.trim());
             const formattedDate = this.#formatDate(dateText);
 
+            // 원래 페이지로 복귀
+            await this.loadPage(page, currentTitleId);
             await page.goto(currentUrl);
+            await page.waitForSelector(this.#SELECTORS.EPISODE_ITEM, { timeout: 10000 });
+
             return formattedDate;
         } catch (error) {
             throw new Error(`연재 시작 날짜 추출 실패: ${error.message}`);
@@ -736,7 +760,16 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
      * @private
      */
     #formatDate(dateStr) {
-        const [year, month, day] = dateStr.split('.');
+        if (!dateStr || typeof dateStr !== 'string') {
+            throw new Error('유효하지 않은 날짜 형식입니다.');
+        }
+
+        const dateMatch = dateStr.match(/(\d{2})\.(\d{2})\.(\d{2})/);
+        if (!dateMatch) {
+            throw new Error('날짜 형식이 YY.MM.DD와 일치하지 않습니다.');
+        }
+
+        const [, year, month, day] = dateMatch;
         return `20${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     }
 } 
