@@ -42,6 +42,9 @@ export class WebtoonContentCollector extends ContentCollector {
             const genres = await implementor.scrapGenres(page);
             const authors = await implementor.scrapAuthors(page);
             
+            // 최신 무료 회차 정보 수집
+            const latestFreeEpisode = await implementor.scrapLatestFreeEpisode(page);
+            
             // 날짜 정보 수집
             const publishStartDate = await implementor.scrapPublishStartDate(page);
             const lastUpdatedDate = await implementor.scrapLastUpdatedDate(page);
@@ -65,6 +68,7 @@ export class WebtoonContentCollector extends ContentCollector {
                     previewCount,
                     genres,
                     authors,
+                    latestFreeEpisode,
                     publishStartDate,
                     lastUpdatedDate
                 }

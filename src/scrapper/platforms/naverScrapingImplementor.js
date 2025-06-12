@@ -259,15 +259,12 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
      */
     async scrapPreviewCount(page) {
         try {
-            // 미리보기 텍스트 영역이 로드될 때까지 대기
             await page.waitForSelector('.EpisodeListPreview__text_area--WMXZz', { timeout: 10000 });
 
-            // strong 태그 내의 숫자를 추출
             const previewCount = await page.evaluate(() => {
                 const element = document.querySelector('.EpisodeListPreview__text_area--WMXZz strong');
                 if (!element) return 0;
                 
-                // "6개" 형태의 텍스트에서 숫자만 추출
                 const count = parseInt(element.textContent.replace(/[^0-9]/g, ''));
                 return isNaN(count) ? 0 : count;
             });
@@ -276,6 +273,55 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
         } catch (error) {
             console.error('미리보기 개수 추출 중 오류 발생:', error);
             return 0;
+        }
+    }
+
+    /**
+     * 웹툰의 최신 무료 회차 정보를 추출합니다.
+     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
+     * @returns {Promise<{
+     *   title: string,
+     *   uploadDate: string,
+     *   link: string,
+     *   episodeNumber: number
+     * }>} 최신 무료 회차 정보
+     */
+    async scrapLatestFreeEpisode(page) {
+        try {
+            await page.waitForSelector('.EpisodeListList__episode_list--_N3ks', { timeout: 10000 });
+            
+            const latestEpisode = await page.evaluate(() => {
+                const firstItem = document.querySelector('.EpisodeListList__item--M8zq4');
+                if (!firstItem) return null;
+
+                const titleElement = firstItem.querySelector('.EpisodeListList__title--lfIzU');
+                const dateElement = firstItem.querySelector('.date');
+                const linkElement = firstItem.querySelector('a');
+
+                if (!titleElement || !dateElement || !linkElement) return null;
+
+                const link = linkElement.getAttribute('href');
+                const episodeNumber = link ? parseInt(new URLSearchParams(link.split('?')[1]).get('no')) : null;
+
+                return {
+                    title: titleElement.textContent.trim(),
+                    uploadDate: dateElement.textContent.trim(),
+                    link: `https://comic.naver.com${link}`,
+                    episodeNumber: episodeNumber
+                };
+            });
+
+            if (!latestEpisode) {
+                throw new Error('최신 무료 회차 정보를 찾을 수 없습니다.');
+            }
+
+            // 날짜 포맷 변환 (YY.MM.DD -> YYYY-MM-DD)
+            latestEpisode.uploadDate = this.formatDate(latestEpisode.uploadDate);
+
+            return latestEpisode;
+        } catch (error) {
+            console.error('최신 무료 회차 정보 추출 중 오류 발생:', error);
+            throw error;
         }
     }
 } 
