@@ -1,5 +1,6 @@
 import { ContentCollector } from './contentCollector.js';
 import { NaverScrapingImplementor } from './platforms/naverScrapingImplementor.js';
+import { FileUtils } from '../utils/fileUtils.js';
 
 export class WebtoonContentCollector extends ContentCollector {
     constructor() {
@@ -35,6 +36,7 @@ export class WebtoonContentCollector extends ContentCollector {
             const status = await implementor.scrapStatus(page);
             const ageRating = await implementor.scrapAgeRating(page);
             const episodeCount = await implementor.scrapEpisodeCount(page);
+
             
             // 장르 및 작가 정보 수집
             const genres = await implementor.scrapGenres(page);
@@ -43,6 +45,10 @@ export class WebtoonContentCollector extends ContentCollector {
             // 날짜 정보 수집
             const publishStartDate = await implementor.scrapPublishStartDate(page);
             const lastUpdatedDate = await implementor.scrapLastUpdatedDate(page);
+
+            // HTML 추출 및 저장
+            const html = await implementor.extractHtml(page);
+            const htmlFilePath = await FileUtils.saveHtmlFile(html, platform, titleId);
 
             return {
                 statusCode: 200,

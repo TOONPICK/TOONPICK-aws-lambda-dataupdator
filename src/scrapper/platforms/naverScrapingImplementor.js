@@ -1,4 +1,5 @@
 import { ScrapingImplementor } from './scrapingImplementor.js';
+import { HtmlFormatter } from '../../utils/htmlFormatter.js';
 
 export class NaverScrapingImplementor extends ScrapingImplementor {
     async scrapTitle(page, titleId) {
@@ -220,5 +221,34 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
 
     getWebtoonUrl(titleId) {
         return `https://comic.naver.com/webtoon/list?titleId=${titleId}`;
+    }
+
+    async extractHtml(page) {
+        // 페이지가 완전히 로드될 때까지 기다림
+        await page.waitForSelector('.EpisodeListInfo__title--mYLjC', { timeout: 10000 }); // 웹툰 제목
+        await page.waitForSelector('.EpisodeListList__item--M8zq4', { timeout: 10000 }); // 에피소드 목록
+        await page.waitForSelector('.EpisodeListInfo__summary_wrap--ZWNW5', { timeout: 10000 }); // 웹툰 설명
+
+        // React 렌더링이 완료될 때까지 추가로 대기
+        await page.waitForTimeout(2000);
+
+        // 스크롤을 조금 내려서 지연 로딩되는 컨텐츠들을 불러옴
+        await page.evaluate(() => {
+            window.scrollBy(0, 500);
+            return new Promise(resolve => setTimeout(resolve, 1000));
+        });
+
+        const html = await page.evaluate(() => {
+            // style 태그 제거
+            const styleElements = document.querySelectorAll('style');
+            styleElements.forEach(style => style.remove());
+
+            const doctype = new XMLSerializer().serializeToString(document.doctype);
+            const html = document.documentElement.outerHTML;
+            return doctype + html;
+        });
+
+        // HTML 포맷팅
+        return await HtmlFormatter.format(html);
     }
 } 
