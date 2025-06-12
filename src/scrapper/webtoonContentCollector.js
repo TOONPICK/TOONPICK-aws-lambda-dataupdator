@@ -51,11 +51,16 @@ export class WebtoonContentCollector extends ContentCollector {
 
             // HTML 추출 및 저장
             const html = await implementor.extractHtml(page);
+
+            // 모든 무료 회차 정보 수집
+            const freeEpisodes = await implementor.scrapFreeEpisodes(page);
+
+            // HTML 파일 저장
             const htmlFilePath = await FileUtils.saveHtmlFile(html, platform, titleId);
 
             return {
                 statusCode: 200,
-                data: { 
+                data: {
                     title,
                     uniqueId,
                     platform,
@@ -70,7 +75,9 @@ export class WebtoonContentCollector extends ContentCollector {
                     authors,
                     latestFreeEpisode,
                     publishStartDate,
-                    lastUpdatedDate
+                    lastUpdatedDate,
+                    htmlFilePath,
+                    freeEpisodes
                 }
             };
         } finally {

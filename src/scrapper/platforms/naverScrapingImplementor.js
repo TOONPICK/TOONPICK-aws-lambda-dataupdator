@@ -283,7 +283,8 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
      *   title: string,
      *   uploadDate: string,
      *   link: string,
-     *   episodeNumber: number
+     *   episodeNumber: number,
+     *   thumbnailUrl: string
      * }>} 최신 무료 회차 정보
      */
     async scrapLatestFreeEpisode(page) {
@@ -297,6 +298,7 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
                 const titleElement = firstItem.querySelector('.EpisodeListList__title--lfIzU');
                 const dateElement = firstItem.querySelector('.date');
                 const linkElement = firstItem.querySelector('a');
+                const thumbnailElement = firstItem.querySelector('img');
 
                 if (!titleElement || !dateElement || !linkElement) return null;
 
@@ -307,7 +309,8 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
                     title: titleElement.textContent.trim(),
                     uploadDate: dateElement.textContent.trim(),
                     link: `https://comic.naver.com${link}`,
-                    episodeNumber: episodeNumber
+                    episodeNumber: episodeNumber,
+                    thumbnailUrl: thumbnailElement ? thumbnailElement.getAttribute('src') : null
                 };
             });
 
@@ -321,6 +324,84 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
             return latestEpisode;
         } catch (error) {
             console.error('최신 무료 회차 정보 추출 중 오류 발생:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 웹툰의 모든 무료 회차 정보를 수집합니다.
+     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
+     * @returns {Promise<Array<{
+     *   title: string,
+     *   uploadDate: string,
+     *   link: string,
+     *   episodeNumber: number,
+     *   thumbnailUrl: string,
+     *   likes: number,
+     *   views: number
+     * }>>} 무료 회차 정보 목록
+     */
+    async scrapFreeEpisodes(page) {
+        try {
+            await page.waitForSelector('.EpisodeListList__episode_list--_N3ks', { timeout: 10000 });
+            
+            let episodes = [];
+            let hasNextPage = true;
+            let currentPage = 1;
+
+            while (hasNextPage) {
+                // 현재 페이지의 에피소드 정보 수집
+                const pageEpisodes = await page.evaluate(() => {
+                    return Array.from(document.querySelectorAll('.EpisodeListList__item--M8zq4')).map(item => {
+                        const titleElement = item.querySelector('.EpisodeListList__title--lfIzU');
+                        const dateElement = item.querySelector('.date');
+                        const linkElement = item.querySelector('a');
+                        const thumbnailElement = item.querySelector('img');
+
+                        if (!titleElement || !dateElement || !linkElement) return null;
+
+                        const link = linkElement.getAttribute('href');
+                        const episodeNumber = link ? parseInt(new URLSearchParams(link.split('?')[1]).get('no')) : null;
+
+                        return {
+                            title: titleElement.textContent.trim(),
+                            uploadDate: dateElement.textContent.trim(),
+                            link: `https://comic.naver.com${link}`,
+                            episodeNumber: episodeNumber,
+                            thumbnailUrl: thumbnailElement ? thumbnailElement.getAttribute('src') : null
+                        };
+                    }).filter(episode => episode !== null);
+                });
+
+                // 날짜 포맷 변환
+                pageEpisodes.forEach(episode => {
+                    episode.uploadDate = this.formatDate(episode.uploadDate);
+                });
+
+                episodes = episodes.concat(pageEpisodes);
+
+                // 다음 페이지 확인
+                const nextPageButton = await page.$('a.page_next');
+                if (nextPageButton) {
+                    const isDisabled = await page.evaluate(button => {
+                        return button.classList.contains('disabled') || button.getAttribute('aria-disabled') === 'true';
+                    }, nextPageButton);
+
+                    if (!isDisabled) {
+                        currentPage++;
+                        await page.goto(`${page.url().split('&page=')[0]}&page=${currentPage}`);
+                        await page.waitForSelector('.EpisodeListList__episode_list--_N3ks', { timeout: 10000 });
+                    } else {
+                        hasNextPage = false;
+                    }
+                } else {
+                    hasNextPage = false;
+                }
+            }
+
+            return episodes;
+        } catch (error) {
+            console.error('무료 회차 정보 추출 중 오류 발생:', error);
             throw error;
         }
     }

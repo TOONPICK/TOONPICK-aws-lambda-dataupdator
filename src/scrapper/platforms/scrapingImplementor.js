@@ -147,10 +147,26 @@ export class ScrapingImplementor {
      *   title: string,
      *   uploadDate: string,
      *   link: string,
-     *   episodeNumber: number
+     *   episodeNumber: number,
+     *   thumbnailUrl: string
      * }>} 최신 무료 회차 정보
      */
     async scrapLatestFreeEpisode(page) {
         throw new Error('scrapLatestFreeEpisode 메서드를 구현해야 합니다.');
+    }
+
+    /**
+     * 웹툰의 모든 무료 회차 정보를 수집합니다.
+     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
+     * @returns {Promise<Array<{
+     *   title: string,
+     *   uploadDate: string,
+     *   link: string,
+     *   episodeNumber: number,
+     *   thumbnailUrl: string
+     * }>>} 무료 회차 정보 목록
+     */
+    async scrapFreeEpisodes(page) {
+        throw new Error('scrapFreeEpisodes 메서드를 구현해야 합니다.');
     }
 } 
