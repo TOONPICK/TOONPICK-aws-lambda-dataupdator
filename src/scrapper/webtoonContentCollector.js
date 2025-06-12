@@ -47,10 +47,6 @@ export class WebtoonContentCollector extends ContentCollector {
             
             // 최신 무료 회차 정보 수집
             const latestFreeEpisode = await implementor.scrapLatestFreeEpisode(page);
-            
-            // 날짜 정보 수집
-            const publishStartDate = await implementor.scrapPublishStartDate(page);
-            const lastUpdatedDate = await implementor.scrapLastUpdatedDate(page);
 
             // HTML 추출
             const html = await implementor.extractHtml(page);
@@ -58,6 +54,10 @@ export class WebtoonContentCollector extends ContentCollector {
             // 모든 회차 정보 수집
             const freeEpisodes = await implementor.scrapFreeEpisodes(page);
             const paidEpisodes = await implementor.scrapPaidEpisodes(page);
+
+            // 날짜 정보 수집
+            const publishStartDate = await implementor.scrapPublishStartDate(page);
+            const lastUpdatedDate = await implementor.scrapLastUpdatedDate(page);
 
             // HTML 파일 저장
             const htmlFilePath = await FileUtils.saveHtmlFile(html, platform, titleId);
