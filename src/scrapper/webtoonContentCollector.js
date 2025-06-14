@@ -29,39 +29,51 @@ export class WebtoonContentCollector extends ContentCollector {
             await implementor.loadPage(page, titleId);
             
             // 기본 정보 수집
-            const title = await implementor.scrapTitle(page);
-            const uniqueId = await implementor.scrapUniqueId(page);
-            const description = await implementor.scrapDescription(page);
-            const thumbnailUrl = await implementor.scrapThumbnailUrl(page);
+            const [title, uniqueId, description, thumbnailUrl] = await Promise.all([
+                implementor.scrapTitle(page),
+                implementor.scrapUniqueId(page),
+                implementor.scrapDescription(page),
+                implementor.scrapThumbnailUrl(page)
+            ]);
             
             // 메타 정보 수집
-            const dayOfWeek = await implementor.scrapDayOfWeek(page);
-            const status = await implementor.scrapStatus(page);
-            const ageRating = await implementor.scrapAgeRating(page);
-            const episodeCount = await implementor.scrapEpisodeCount(page);
-            const previewCount = await implementor.scrapPreviewCount(page);
+            const [dayOfWeek, status, ageRating, episodeCount, previewCount] = await Promise.all([
+                implementor.scrapDayOfWeek(page),
+                implementor.scrapStatus(page),
+                implementor.scrapAgeRating(page),
+                implementor.scrapEpisodeCount(page),
+                implementor.scrapPreviewCount(page)
+            ]);
             
             // 장르 및 작가 정보 수집
-            const genres = await implementor.scrapGenres(page);
-            const authors = await implementor.scrapAuthors(page);
+            const [genres, authors] = await Promise.all([
+                implementor.scrapGenres(page),
+                implementor.scrapAuthors(page)
+            ]);
             
             // 최신 무료 회차 정보 수집
             const latestFreeEpisode = await implementor.scrapLatestFreeEpisode(page);
 
-            // HTML 추출
-            const html = await implementor.extractHtml(page);
-
             // 모든 회차 정보 수집
-            const freeEpisodes = await implementor.scrapFreeEpisodes(page);
-            const paidEpisodes = await implementor.scrapPaidEpisodes(page);
+            const [freeEpisodes, paidEpisodes] = await Promise.all([
+                implementor.scrapFreeEpisodes(page),
+                implementor.scrapPaidEpisodes(page)
+            ]);
 
             // 관련 상품 정보 수집
-            const relatedNovels = await implementor.scrapRelatedNovels(page);
-            const relatedWebtoonIds = await implementor.scrapRelatedWebtoonIds(page);
+            const [relatedNovels, relatedWebtoonIds] = await Promise.all([
+                implementor.scrapRelatedNovels(page),
+                implementor.scrapRelatedWebtoonIds(page)
+            ]);
 
             // 날짜 정보 수집
-            const publishStartDate = await implementor.scrapPublishStartDate(page);
-            const lastUpdatedDate = await implementor.scrapLastUpdatedDate(page);
+            const [publishStartDate, lastUpdatedDate] = await Promise.all([
+                implementor.scrapPublishStartDate(page),
+                implementor.scrapLastUpdatedDate(page)
+            ]);
+
+            // HTML 추출
+            //const html = await implementor.extractHtml(page);
 
             // HTML 파일 저장
             //const htmlFilePath = await FileUtils.saveHtmlFile(html, platform, titleId);

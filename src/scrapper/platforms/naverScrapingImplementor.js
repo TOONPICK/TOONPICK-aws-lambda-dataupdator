@@ -743,9 +743,9 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
 
     /**
      * 다음 페이지로 이동합니다.
-     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
-     * @param {number} currentPage - 현재 페이지 번호
-     * @returns {Promise<boolean>} 다음 페이지 존재 여부
+     * @param {import('puppeteer-core').Page} page
+     * @param {number} currentPage
+     * @returns {Promise<boolean>}
      * @private
      */
     async #moveToNextPage(page, currentPage) {
@@ -822,8 +822,8 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
                         }
 
                         const title = titleElement.textContent.trim()
-                            .replace(/웹소설\s+/, '')  // "웹소설" 텍스트 제거
-                            .replace(/[<>]/g, '')      // < > 기호 제거
+                            .replace(/웹소설\s+/, '')
+                            .replace(/[<>]/g, '')
                             .trim();
                         
                         const link = linkElement?.getAttribute('href');
@@ -864,9 +864,9 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
 
     /**
      * 연관된 웹툰들의 ID를 스크래핑합니다.
-     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
-     * @returns {Promise<string[]>} 연관 웹툰 ID 목록
-     * @throws {Error} 연관 웹툰 ID 추출 실패 시 에러
+     * @param {import('puppeteer-core').Page} page
+     * @returns {Promise<string[]>}
+     * @throws {Error}
      */
     async scrapRelatedWebtoonIds(page) {
         try {
