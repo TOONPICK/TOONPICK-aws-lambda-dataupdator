@@ -650,7 +650,6 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
      */
     async #extractAuthorInfo(category) {
         try {
-            await category.waitForSelector('a', { timeout: 1000 });
             const linkTag = await category.$('a');
             if (!linkTag) return null;
 

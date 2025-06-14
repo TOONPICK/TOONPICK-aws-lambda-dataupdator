@@ -64,7 +64,7 @@ export class WebtoonContentCollector extends ContentCollector {
             const lastUpdatedDate = await implementor.scrapLastUpdatedDate(page);
 
             // HTML 파일 저장
-            const htmlFilePath = await FileUtils.saveHtmlFile(html, platform, titleId);
+            //const htmlFilePath = await FileUtils.saveHtmlFile(html, platform, titleId);
 
             return {
                 statusCode: 200,
@@ -84,7 +84,6 @@ export class WebtoonContentCollector extends ContentCollector {
                     latestFreeEpisode,
                     publishStartDate,
                     lastUpdatedDate,
-                    htmlFilePath,
                     freeEpisodes,
                     paidEpisodes,
                     relatedNovels,
