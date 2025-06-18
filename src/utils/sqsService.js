@@ -1,10 +1,11 @@
-import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
+import { SQSClient, SendMessageCommand, GetQueueAttributesCommand } from '@aws-sdk/client-sqs';
 import { getEnvVar } from '../config/env.js';
 
 export class SQSService {
     constructor() {
         this.client = null;
         this.queueUrl = null;
+        this.isFifoQueue = false;
         this.initialized = false;
     }
 
@@ -24,9 +25,16 @@ export class SQSService {
 
             this.client = new SQSClient({ region });
             this.queueUrl = queueUrl;
+            
+            // FIFO 큐 여부 확인
+            this.isFifoQueue = queueUrl.endsWith('.fifo');
+            
             this.initialized = true;
             
-            console.log('SQS 서비스 초기화 완료');
+            console.log('SQS 서비스 초기화 완료', {
+                queueUrl: queueUrl,
+                isFifoQueue: this.isFifoQueue
+            });
         } catch (error) {
             console.error('SQS 서비스 초기화 실패:', error);
             throw new Error(`SQS 서비스 초기화 실패: ${error.message}`);
@@ -50,13 +58,18 @@ export class SQSService {
                 status: 'completed'
             });
 
-            const command = new SendMessageCommand({
+            const commandParams = {
                 QueueUrl: this.queueUrl,
-                MessageBody: messageBody,
-                MessageGroupId: requestId,
-                MessageDeduplicationId: `${requestId}-${Date.now()}`
-            });
+                MessageBody: messageBody
+            };
 
+            // FIFO 큐인 경우에만 MessageGroupId와 MessageDeduplicationId 추가
+            if (this.isFifoQueue) {
+                commandParams.MessageGroupId = requestId;
+                commandParams.MessageDeduplicationId = `${requestId}-${Date.now()}`;
+            }
+
+            const command = new SendMessageCommand(commandParams);
             const response = await this.client.send(command);
             
             console.log(`SQS 메시지 전송 성공: ${response.MessageId}`);
@@ -94,13 +107,18 @@ export class SQSService {
                 status: 'failed'
             });
 
-            const command = new SendMessageCommand({
+            const commandParams = {
                 QueueUrl: this.queueUrl,
-                MessageBody: messageBody,
-                MessageGroupId: requestId,
-                MessageDeduplicationId: `${requestId}-error-${Date.now()}`
-            });
+                MessageBody: messageBody
+            };
 
+            // FIFO 큐인 경우에만 MessageGroupId와 MessageDeduplicationId 추가
+            if (this.isFifoQueue) {
+                commandParams.MessageGroupId = requestId;
+                commandParams.MessageDeduplicationId = `${requestId}-error-${Date.now()}`;
+            }
+
+            const command = new SendMessageCommand(commandParams);
             const response = await this.client.send(command);
             
             console.log(`SQS 에러 메시지 전송 성공: ${response.MessageId}`);
