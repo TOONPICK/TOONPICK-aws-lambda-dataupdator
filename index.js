@@ -25,9 +25,9 @@ export async function handler(event) {
         requestId = request.requestId || record.messageId || `req-${Date.now()}`;
         
         console.log(`크롤링 요청 시작: ${requestId}`, {
-            platform: request.platform,
-            type: request.type,
-            url: request.url
+            platform: request.data?.platform,
+            type: request.data?.type,
+            url: request.data?.url
         });
         
         // 브라우저와 크롤러 생성
@@ -39,8 +39,8 @@ export async function handler(event) {
         
         const processingTime = Date.now() - startTime;
         const context = {
-            platform: request.platform,
-            type: request.type,
+            platform: request.data?.platform || 'Unknown',
+            type: request.data?.type || 'Unknown',
             processingTime: processingTime
         };
         
@@ -51,8 +51,13 @@ export async function handler(event) {
         // 결과를 SQS로 전송
         const sqsResult = await sqsService.sendResult(result, requestId);
         
-        // 성공 알림을 Slack으로 전송
-        const slackResult = await slackService.sendSuccess(result, requestId, context);
+        // 성공 알림을 Slack으로 전송 (오류가 있어도 크롤링은 성공으로 처리)
+        let slackResult = null;
+        try {
+            slackResult = await slackService.sendSuccess(result, requestId, context);
+        } catch (slackError) {
+            console.warn('Slack 알림 전송 실패 (크롤링은 성공):', slackError.message);
+        }
         
         console.log(`크롤링 완료: ${requestId}`, {
             processingTime: processingTime,
@@ -74,8 +79,8 @@ export async function handler(event) {
     } catch (error) {
         const processingTime = Date.now() - startTime;
         const context = {
-            platform: request?.platform || 'Unknown',
-            type: request?.type || 'Unknown',
+            platform: request?.data?.platform || 'Unknown',
+            type: request?.data?.type || 'Unknown',
             processingTime: processingTime
         };
         
@@ -93,8 +98,12 @@ export async function handler(event) {
             // 에러 정보를 SQS로 전송
             await sqsService.sendError(error, requestId, context);
             
-            // 에러 알림을 Slack으로 전송
-            await slackService.sendError(error, requestId, context);
+            // 에러 알림을 Slack으로 전송 (오류가 있어도 로깅만)
+            try {
+                await slackService.sendError(error, requestId, context);
+            } catch (slackError) {
+                console.warn('Slack 에러 알림 전송 실패:', slackError.message);
+            }
             
         } catch (notificationError) {
             console.error('알림 전송 실패:', notificationError);

@@ -24,12 +24,25 @@ export class SlackService {
                 getEnvVar('SLACK_USERNAME')
             ]);
 
+            // Webhook URL 검증
+            if (!webhookUrl) {
+                throw new Error('SLACK_WEBHOOK_URL이 설정되지 않았습니다.');
+            }
+            
+            if (!webhookUrl.startsWith('https://hooks.slack.com/')) {
+                console.warn(`잘못된 Slack Webhook URL 형식: ${webhookUrl.substring(0, 50)}...`);
+            }
+
             this.webhookUrl = webhookUrl;
             this.channel = channel;
             this.username = username;
             this.initialized = true;
             
-            console.log('Slack 서비스 초기화 완료');
+            console.log('Slack 서비스 초기화 완료', {
+                webhookUrl: webhookUrl ? `${webhookUrl.substring(0, 30)}...` : '설정되지 않음',
+                channel: channel,
+                username: username
+            });
         } catch (error) {
             console.error('Slack 서비스 초기화 실패:', error);
             throw new Error(`Slack 서비스 초기화 실패: ${error.message}`);
@@ -48,7 +61,6 @@ export class SlackService {
 
         try {
             const message = {
-                channel: this.channel,
                 username: this.username,
                 icon_emoji: ':white_check_mark:',
                 attachments: [
@@ -83,6 +95,11 @@ export class SlackService {
                 ]
             };
 
+            // Webhook URL에 채널이 포함되어 있지 않은 경우에만 채널 지정
+            if (this.channel && !this.webhookUrl.includes('/services/')) {
+                message.channel = this.channel;
+            }
+
             const response = await this._sendToSlack(message);
             
             console.log('Slack 성공 메시지 전송 완료');
@@ -108,7 +125,6 @@ export class SlackService {
 
         try {
             const message = {
-                channel: this.channel,
                 username: this.username,
                 icon_emoji: ':x:',
                 attachments: [
@@ -143,6 +159,11 @@ export class SlackService {
                 ]
             };
 
+            // Webhook URL에 채널이 포함되어 있지 않은 경우에만 채널 지정
+            if (this.channel && !this.webhookUrl.includes('/services/')) {
+                message.channel = this.channel;
+            }
+
             const response = await this._sendToSlack(message);
             
             console.log('Slack 에러 메시지 전송 완료');
@@ -162,19 +183,37 @@ export class SlackService {
      * @returns {Promise<Response>} HTTP 응답
      */
     async _sendToSlack(message) {
-        const response = await fetch(this.webhookUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(message)
-        });
-
-        if (!response.ok) {
-            throw new Error(`Slack API 응답 오류: ${response.status} ${response.statusText}`);
+        if (!this.webhookUrl) {
+            throw new Error('Slack Webhook URL이 설정되지 않았습니다.');
         }
 
-        return response;
+        try {
+            const response = await fetch(this.webhookUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(message)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Slack API 응답 오류:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    url: this.webhookUrl.substring(0, 50) + '...',
+                    errorText: errorText.substring(0, 200)
+                });
+                throw new Error(`Slack API 응답 오류: ${response.status} ${response.statusText} - ${errorText}`);
+            }
+
+            return response;
+        } catch (error) {
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                throw new Error(`Slack Webhook URL에 연결할 수 없습니다: ${this.webhookUrl.substring(0, 50)}...`);
+            }
+            throw error;
+        }
     }
 
     /**

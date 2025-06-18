@@ -107,18 +107,37 @@ export class ParameterStoreService {
         try {
             const parameters = await this.getParameters(parameterNames, useCache);
             
+            // 파라미터 값들을 로깅 (보안을 위해 일부만)
+            console.log('Parameter Store에서 가져온 파라미터들:', {
+                'AWS/AWS_SQS_WEBTOON_UPDATE_COMPLETE_URL': parameters['AWS/AWS_SQS_WEBTOON_UPDATE_COMPLETE_URL'] ? '설정됨' : '누락됨',
+                'AWS/AWS_SQS_WEBTOON_UPDATE_COMPLETE': parameters['AWS/AWS_SQS_WEBTOON_UPDATE_COMPLETE'] ? '설정됨' : '누락됨',
+                'AWS/AWS_REGION': parameters['AWS/AWS_REGION'] || '기본값 사용',
+                'SLACK/SLACK_WEBHOOK_URL': parameters['SLACK/SLACK_WEBHOOK_URL'] ? '설정됨' : '누락됨'
+            });
+            
             // 기본값 설정
-            return {
+            const envVars = {
                 SQS_RESULT_QUEUE_URL: parameters['AWS/AWS_SQS_WEBTOON_UPDATE_COMPLETE_URL'],
                 SQS_RESULT_QUEUE_NAME: parameters['AWS/AWS_SQS_WEBTOON_UPDATE_COMPLETE'],
                 SQS_RESULT_QUEUE_REGION: parameters['AWS/AWS_REGION'] || 'ap-northeast-2',
                 SLACK_WEBHOOK_URL: parameters['SLACK/SLACK_WEBHOOK_URL'],
-                SLACK_CHANNEL: '#webtoon-crawler', // 기본값
+                SLACK_CHANNEL: '#general', // 기본값을 일반적인 채널로 변경
                 SLACK_USERNAME: 'Webtoon Crawler', // 기본값
                 AWS_REGION: parameters['AWS/AWS_REGION'] || 'ap-northeast-2',
                 ENVIRONMENT: 'production', // 기본값
                 LOG_LEVEL: 'info' // 기본값
             };
+            
+            // 필수 파라미터 검증
+            if (!envVars.SLACK_WEBHOOK_URL) {
+                console.warn('SLACK_WEBHOOK_URL이 설정되지 않았습니다. Slack 알림이 작동하지 않을 수 있습니다.');
+            }
+            
+            if (!envVars.SQS_RESULT_QUEUE_URL) {
+                console.warn('SQS_RESULT_QUEUE_URL이 설정되지 않았습니다. SQS 전송이 작동하지 않을 수 있습니다.');
+            }
+            
+            return envVars;
             
         } catch (error) {
             console.error('모든 환경 변수 가져오기 실패:', error);
