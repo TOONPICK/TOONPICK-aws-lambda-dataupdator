@@ -3,10 +3,34 @@ import { getEnvVar } from '../config/env.js';
 
 export class SQSService {
     constructor() {
-        this.client = new SQSClient({
-            region: getEnvVar('SQS_RESULT_QUEUE_REGION')
-        });
-        this.queueUrl = getEnvVar('SQS_RESULT_QUEUE_URL');
+        this.client = null;
+        this.queueUrl = null;
+        this.initialized = false;
+    }
+
+    /**
+     * 서비스 초기화 (Parameter Store에서 설정 가져오기)
+     */
+    async initialize() {
+        if (this.initialized) {
+            return;
+        }
+
+        try {
+            const [region, queueUrl] = await Promise.all([
+                getEnvVar('SQS_RESULT_QUEUE_REGION'),
+                getEnvVar('SQS_RESULT_QUEUE_URL')
+            ]);
+
+            this.client = new SQSClient({ region });
+            this.queueUrl = queueUrl;
+            this.initialized = true;
+            
+            console.log('SQS 서비스 초기화 완료');
+        } catch (error) {
+            console.error('SQS 서비스 초기화 실패:', error);
+            throw new Error(`SQS 서비스 초기화 실패: ${error.message}`);
+        }
     }
 
     /**
@@ -16,6 +40,8 @@ export class SQSService {
      * @returns {Promise<Object>} 전송 결과
      */
     async sendResult(result, requestId) {
+        await this.initialize();
+
         try {
             const messageBody = JSON.stringify({
                 timestamp: new Date().toISOString(),
@@ -53,6 +79,8 @@ export class SQSService {
      * @returns {Promise<Object>} 전송 결과
      */
     async sendError(error, requestId, context = {}) {
+        await this.initialize();
+
         try {
             const messageBody = JSON.stringify({
                 timestamp: new Date().toISOString(),
