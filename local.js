@@ -9,7 +9,7 @@ async function main() {
                 messageId: 'test-1',
                 body: JSON.stringify({
                     requestId: 'test-1',
-                    eventType: 'WEBTOON_CRAWL',
+                    eventType: 'WEBTOON_UPDATE',
                     data: {
                         titleId: '747269',
                         platform: 'NAVER'
