@@ -10,7 +10,9 @@
     "build": "powershell -File deploy.ps1"
   },
   "dependencies": {
+    "@aws-sdk/client-sqs": "^3.450.0",
     "@sparticuz/chromium": "^109.0.5",
+    "node-fetch": "^3.3.2",
     "prettier": "^3.5.3",
     "puppeteer-core": "^21.0.0"
   },
