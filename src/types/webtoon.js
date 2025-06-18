@@ -15,8 +15,6 @@
  * @property {string} link - 에피소드 링크
  * @property {number} episodeNumber - 에피소드 번호
  * @property {string} thumbnailUrl - 썸네일 URL
- * @property {number} likes - 좋아요 수
- * @property {number} views - 조회수
  */
 
 /**
