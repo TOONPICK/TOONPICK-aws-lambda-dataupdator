@@ -7,19 +7,31 @@
   "scripts": {
     "start": "node local.js",
     "test": "node test.js",
+    "dev": "node local.js",
     "build": "powershell -File deploy.ps1",
+    "build:unix": "./deploy.sh",
     "build:layer": "powershell -File create-layer.ps1",
-    "build:layer:unix": "./create-layer.sh"
+    "build:layer:unix": "./create-layer.sh",
+    "build:all": "npm run build:layer && npm run build",
+    "build:all:unix": "npm run build:layer:unix && npm run build:unix",
+    "clean": "powershell -Command \"if (Test-Path build) { Remove-Item -Recurse -Force build }\"",
+    "clean:unix": "rm -rf build",
+    "deploy:layer": "aws lambda publish-layer-version --layer-name webtoon-crawler-deps --description 'Dependencies for Webtoon Crawler' --zip-file fileb://build/layer.zip --compatible-runtimes nodejs18.x --region ap-northeast-2",
+    "audit:fix": "npm audit fix",
+    "audit:fix:force": "npm audit fix --force"
   },
   "dependencies": {
-    "@aws-sdk/client-sqs": "^3.450.0",
-    "@aws-sdk/client-ssm": "^3.450.0",
-    "@sparticuz/chromium": "^109.0.5",
+    "@aws-sdk/client-sqs": "^3.470.0",
+    "@aws-sdk/client-ssm": "^3.470.0",
+    "@sparticuz/chromium": "^119.0.2",
     "node-fetch": "^3.3.2",
-    "prettier": "^3.5.3",
-    "puppeteer-core": "^21.0.0"
+    "prettier": "^3.1.1",
+    "puppeteer-core": "^21.6.1"
   },
   "devDependencies": {
-    "puppeteer": "^21.0.0"
+    "puppeteer": "^21.6.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
