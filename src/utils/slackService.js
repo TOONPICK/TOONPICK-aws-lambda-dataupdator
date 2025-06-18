@@ -3,9 +3,37 @@ import { getEnvVar } from '../config/env.js';
 
 export class SlackService {
     constructor() {
-        this.webhookUrl = getEnvVar('SLACK_WEBHOOK_URL');
-        this.channel = getEnvVar('SLACK_CHANNEL');
-        this.username = getEnvVar('SLACK_USERNAME');
+        this.webhookUrl = null;
+        this.channel = null;
+        this.username = null;
+        this.initialized = false;
+    }
+
+    /**
+     * 서비스 초기화 (Parameter Store에서 설정 가져오기)
+     */
+    async initialize() {
+        if (this.initialized) {
+            return;
+        }
+
+        try {
+            const [webhookUrl, channel, username] = await Promise.all([
+                getEnvVar('SLACK_WEBHOOK_URL'),
+                getEnvVar('SLACK_CHANNEL'),
+                getEnvVar('SLACK_USERNAME')
+            ]);
+
+            this.webhookUrl = webhookUrl;
+            this.channel = channel;
+            this.username = username;
+            this.initialized = true;
+            
+            console.log('Slack 서비스 초기화 완료');
+        } catch (error) {
+            console.error('Slack 서비스 초기화 실패:', error);
+            throw new Error(`Slack 서비스 초기화 실패: ${error.message}`);
+        }
     }
 
     /**
@@ -16,6 +44,8 @@ export class SlackService {
      * @returns {Promise<Object>} 전송 결과
      */
     async sendSuccess(result, requestId, context = {}) {
+        await this.initialize();
+
         try {
             const message = {
                 channel: this.channel,
@@ -74,6 +104,8 @@ export class SlackService {
      * @returns {Promise<Object>} 전송 결과
      */
     async sendError(error, requestId, context = {}) {
+        await this.initialize();
+
         try {
             const message = {
                 channel: this.channel,

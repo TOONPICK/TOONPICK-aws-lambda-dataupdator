@@ -9,10 +9,11 @@ import { SlackService } from './src/utils/slackService.js';
 export async function handler(event) {
     const startTime = Date.now();
     let requestId = null;
+    let request = null;
     
     try {
-        // 환경 변수 검증
-        validateEnvironmentVariables();
+        // 환경 변수 검증 (Parameter Store에서 가져옴)
+        await validateEnvironmentVariables();
         
         // SQS 이벤트에서 첫 번째 레코드를 처리
         if (!event.Records || !event.Records[0]) {
@@ -20,7 +21,7 @@ export async function handler(event) {
         }
 
         const record = event.Records[0];
-        const request = parseCrawlRequest(record);
+        request = parseCrawlRequest(record);
         requestId = request.requestId || record.messageId || `req-${Date.now()}`;
         
         console.log(`크롤링 요청 시작: ${requestId}`, {
