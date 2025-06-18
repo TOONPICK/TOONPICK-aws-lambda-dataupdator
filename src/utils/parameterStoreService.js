@@ -4,7 +4,8 @@ export class ParameterStoreService {
     constructor(region = 'ap-northeast-2') {
         this.client = new SSMClient({ region });
         this.cache = new Map();
-        this.parameterPrefix = '/webtoon-crawler/';
+        // 환경 변수에서 파라미터 prefix 가져오기 (기본값 제공)
+        this.parameterPrefix = process.env.PARAMETER_STORE_PREFIX || '/TOONPICK/prod/';
     }
 
     /**
@@ -97,14 +98,10 @@ export class ParameterStoreService {
      */
     async getAllEnvironmentVariables(useCache = true) {
         const parameterNames = [
-            'SQS_RESULT_QUEUE_URL',
-            'SQS_RESULT_QUEUE_REGION',
-            'SLACK_WEBHOOK_URL',
-            'SLACK_CHANNEL',
-            'SLACK_USERNAME',
-            'AWS_REGION',
-            'ENVIRONMENT',
-            'LOG_LEVEL'
+            'AWS/AWS_SQS_WEBTOON_UPDATE_COMPLETE_URL',
+            'AWS/AWS_SQS_WEBTOON_UPDATE_COMPLETE',
+            'AWS/AWS_REGION',
+            'SLACK/SLACK_WEBHOOK_URL'
         ];
 
         try {
@@ -112,14 +109,15 @@ export class ParameterStoreService {
             
             // 기본값 설정
             return {
-                SQS_RESULT_QUEUE_URL: parameters.SQS_RESULT_QUEUE_URL,
-                SQS_RESULT_QUEUE_REGION: parameters.SQS_RESULT_QUEUE_REGION || 'ap-northeast-2',
-                SLACK_WEBHOOK_URL: parameters.SLACK_WEBHOOK_URL,
-                SLACK_CHANNEL: parameters.SLACK_CHANNEL || '#webtoon-crawler',
-                SLACK_USERNAME: parameters.SLACK_USERNAME || 'Webtoon Crawler',
-                AWS_REGION: parameters.AWS_REGION || 'ap-northeast-2',
-                ENVIRONMENT: parameters.ENVIRONMENT || 'production',
-                LOG_LEVEL: parameters.LOG_LEVEL || 'info'
+                SQS_RESULT_QUEUE_URL: parameters['AWS/AWS_SQS_WEBTOON_UPDATE_COMPLETE_URL'],
+                SQS_RESULT_QUEUE_NAME: parameters['AWS/AWS_SQS_WEBTOON_UPDATE_COMPLETE'],
+                SQS_RESULT_QUEUE_REGION: parameters['AWS/AWS_REGION'] || 'ap-northeast-2',
+                SLACK_WEBHOOK_URL: parameters['SLACK/SLACK_WEBHOOK_URL'],
+                SLACK_CHANNEL: '#webtoon-crawler', // 기본값
+                SLACK_USERNAME: 'Webtoon Crawler', // 기본값
+                AWS_REGION: parameters['AWS/AWS_REGION'] || 'ap-northeast-2',
+                ENVIRONMENT: 'production', // 기본값
+                LOG_LEVEL: 'info' // 기본값
             };
             
         } catch (error) {
@@ -144,5 +142,13 @@ export class ParameterStoreService {
         const fullParameterName = `${this.parameterPrefix}${parameterName}`;
         this.cache.delete(fullParameterName);
         console.log(`캐시에서 제거됨: ${fullParameterName}`);
+    }
+
+    /**
+     * 현재 파라미터 prefix 반환 (디버깅용)
+     * @returns {string} 현재 설정된 파라미터 prefix
+     */
+    getParameterPrefix() {
+        return this.parameterPrefix;
     }
 } 
