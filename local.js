@@ -10,11 +10,23 @@ async function main() {
                 body: JSON.stringify({
                     requestId: 'test-1',
                     eventType: 'WEBTOON_UPDATE',
-                    data: {
-                        titleId: '747269',
-                        platform: 'NAVER',
-                        prevEpisodeCount: 267
-                    }
+                    data: [
+                        {
+                            titleId: '747269',
+                            platform: 'NAVER',
+                            prevEpisodeCount: 267
+                        },
+                        {
+                            titleId: '821597',
+                            platform: 'NAVER',
+                            prevEpisodeCount: 77
+                        },
+                        {
+                            titleId: '832557',
+                            platform: 'NAVER',
+                            prevEpisodeCount: 42
+                        }
+                    ]
                 })
             }
         ]
@@ -26,8 +38,14 @@ async function main() {
     
     try {
         // 크롤링 실행
-        const result = await crawler.execute(JSON.parse(testEvent.Records[0].body));
-        console.log('크롤링 결과:', JSON.parse(result.body));
+        const results = await crawler.execute(JSON.parse(testEvent.Records[0].body));
+        if (Array.isArray(results)) {
+            results.forEach((result, idx) => {
+                console.log(`크롤링 결과 [${idx}]:`, JSON.parse(result.body));
+            });
+        } else {
+            console.log('크롤링 결과:', JSON.parse(results.body));
+        }
     } catch (error) {
         console.error('크롤링 실패:', error);
     }

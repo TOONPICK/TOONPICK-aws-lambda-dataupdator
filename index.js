@@ -102,33 +102,43 @@ export async function handler(event) {
         // 크롤링 실행
         const browserType = new LambdaBrowser();
         const crawler = new Crawler(browserType);
-        const result = await crawler.execute(request);
+        const results = await crawler.execute(request);
         const processingTime = Date.now() - startTime;
         const context = {
             platform: request.data?.platform || 'Unknown',
             type: request.data?.type || 'Unknown',
             processingTime
         };
-        // SQS/Slack 알림
-        const sqsResult = await sqsClient.send(result, { requestId, type: 'result' });
-        try {
-            await slackClient.send(result, 'success', { requestId, context });
-        } catch (slackError) {
-            console.warn('Slack 알림 전송 실패 (크롤링은 성공):', slackError.message);
+        // SQS/Slack 알림 (각 결과별로)
+        let successCount = 0;
+        let failCount = 0;
+        let sqsMessageIds = [];
+        for (const result of results) {
+            try {
+                const sqsResult = await sqsClient.send(result, { requestId, type: 'result' });
+                sqsMessageIds.push(sqsResult.MessageId);
+                if (result.success) successCount++;
+                else failCount++;
+                try {
+                    await slackClient.send(result, result.success ? 'success' : 'error', { requestId, context });
+                } catch (slackError) {
+                    console.warn('Slack 알림 전송 실패:', slackError.message);
+                }
+            } catch (sqsError) {
+                console.error('SQS 전송 실패:', sqsError.message);
+                failCount++;
+            }
         }
-        console.log(`크롤링 완료: ${requestId}`, {
-            processingTime,
-            sqsMessageId: sqsResult.MessageId,
-            dataCount: Array.isArray(result) ? result.length : 1
-        });
         return {
             statusCode: 200,
             body: JSON.stringify({
-                success: true,
+                success: failCount === 0,
                 requestId,
                 processingTime,
-                sqsMessageId: sqsResult.MessageId,
-                dataCount: Array.isArray(result) ? result.length : 1
+                sqsMessageIds,
+                successCount,
+                failCount,
+                results
             })
         };
     } catch (error) {
