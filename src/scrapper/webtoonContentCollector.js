@@ -1,12 +1,12 @@
 import { ContentCollector } from './contentCollector.js';
-import { NaverScrapingImplementor } from './platforms/naverScrapingImplementor.js';
 
 export class WebtoonContentCollector extends ContentCollector {
-    constructor() {
+    /**
+     * @param {import('./scrapperFactory.js').ScrapperFactory} scrapperFactory
+     */
+    constructor(scrapperFactory) {
         super();
-        this.implementors = new Map([
-            ['NAVER', new NaverScrapingImplementor()]
-        ]);
+        this.scrapperFactory = scrapperFactory;
     }
 
     /**
@@ -15,13 +15,8 @@ export class WebtoonContentCollector extends ContentCollector {
      * @returns {Promise<{statusCode: number, data: import('../types/webtoon.js').WebtoonScrapResult}>}
      */
     async execute(browser, data) {
-        const { titleId, platform = 'NAVER' } = data;
-        
-        const implementor = this.implementors.get(platform);
-        if (!implementor) {
-            throw new Error(`지원하지 않는 플랫폼입니다: ${platform}`);
-        }
-
+        const { titleId, platform } = data;
+        const implementor = this.scrapperFactory.getScrapper(platform);
         const page = await browser.newPage();
         try {
             // 페이지 로드
