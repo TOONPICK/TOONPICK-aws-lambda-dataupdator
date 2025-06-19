@@ -150,33 +150,43 @@ export class ScrapingImplementor {
     }
 
     /**
-     * 웹툰의 최신 무료 회차 정보를 추출합니다.
+     * 최신 무료 회차 N개를 수집합니다.
      * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
-     * @returns {Promise<{
-     *   title: string,
-     *   uploadDate: string,
-     *   link: string,
-     *   episodeNumber: number,
-     *   thumbnailUrl: string
-     * }>} 최신 무료 회차 정보
+     * @param {number} count - 수집할 회차 개수 (기본값: 1)
+     * @returns {Promise<Array<{ title: string, uploadDate: string, link: string, episodeNumber: number, thumbnailUrl: string }>>}
+     * 실제 수집 개수는 N보다 적을 수 있습니다.
      */
-    async scrapLatestFreeEpisode(page) {
-        throw new Error('scrapLatestFreeEpisode 메서드를 구현해야 합니다.');
+    async scrapLatestFreeEpisodes(page, count = 1) {
+        throw new Error('scrapLatestFreeEpisodes 메서드를 구현해야 합니다.');
     }
 
     /**
-     * 웹툰의 모든 무료 회차 정보를 수집합니다.
+     * 최신 미리보기 회차 N개를 수집합니다.
      * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
-     * @returns {Promise<Array<{
-     *   title: string,
-     *   uploadDate: string,
-     *   link: string,
-     *   episodeNumber: number,
-     *   thumbnailUrl: string
-     * }>>} 무료 회차 정보 목록
+     * @param {number} count - 수집할 회차 개수 (기본값: 1)
+     * @returns {Promise<Array<{ title: string, uploadDate: string, link: string, episodeNumber: number, thumbnailUrl: string }>>}
+     * 실제 수집 개수는 N보다 적을 수 있습니다.
+     */
+    async scrapLatestPreviewEpisodes(page, count = 1) {
+        throw new Error('scrapLatestPreviewEpisodes 메서드를 구현해야 합니다.');
+    }
+
+    /**
+     * 모든 무료 회차 정보를 수집합니다.
+     * @param {import('puppeteer-core').Page} page
+     * @returns {Promise<Array<{ title: string, uploadDate: string, link: string, episodeNumber: number, thumbnailUrl: string }>>}
      */
     async scrapFreeEpisodes(page) {
         throw new Error('scrapFreeEpisodes 메서드를 구현해야 합니다.');
+    }
+
+    /**
+     * 모든 유료 회차 정보를 수집합니다.
+     * @param {import('puppeteer-core').Page} page
+     * @returns {Promise<Array<{ title: string, uploadDate: string, link: string, episodeNumber: number, thumbnailUrl: string }>>}
+     */
+    async scrapPaidEpisodes(page) {
+        throw new Error('scrapPaidEpisodes 메서드를 구현해야 합니다.');
     }
 
     /**
