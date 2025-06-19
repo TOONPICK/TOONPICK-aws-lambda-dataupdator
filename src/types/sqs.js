@@ -50,16 +50,24 @@ export function parseCrawlRequest(sqsRecord) {
     try {
         // SQS 메시지의 body는 문자열로 전달됨
         const requestMessage = JSON.parse(sqsRecord.body);
-        
+
+        // eventType, data가 없고 requests가 있으면 이를 매핑
+        let eventType = requestMessage.eventType;
+        let data = requestMessage.data;
+        if (!eventType && requestMessage.requests) {
+            eventType = 'WEBTOON_UPDATE';
+            data = requestMessage.requests;
+        }
+
         // SQS 메시지 구조 검증
-        if (!requestMessage.eventType || !requestMessage.data) {
+        if (!eventType || !data) {
             throw new Error('필수 필드가 누락되었습니다: eventType, data는 필수입니다.');
         }
 
         return {
             requestId: requestMessage.requestId || sqsRecord.messageId,
-            eventType: requestMessage.eventType,
-            data: requestMessage.data
+            eventType,
+            data
         };
     } catch (error) {
         throw new Error(`SQS 메시지 파싱 실패: ${error.message}`);
