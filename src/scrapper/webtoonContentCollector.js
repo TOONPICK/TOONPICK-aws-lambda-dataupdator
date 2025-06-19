@@ -1,6 +1,5 @@
 import { ContentCollector } from './contentCollector.js';
 import { NaverScrapingImplementor } from './platforms/naverScrapingImplementor.js';
-import { FileUtils } from '../utils/fileUtils.js';
 
 export class WebtoonContentCollector extends ContentCollector {
     constructor() {
@@ -52,7 +51,7 @@ export class WebtoonContentCollector extends ContentCollector {
             ]);
             
             // 최신 무료 회차 정보 수집
-            const latestFreeEpisode = await implementor.scrapLatestFreeEpisode(page);
+            const latestFreeEpisode = await implementor.scrapLatestFreeEpisodes(page);
 
             // 모든 회차 정보 수집
             const [freeEpisodes, paidEpisodes] = await Promise.all([
@@ -71,12 +70,6 @@ export class WebtoonContentCollector extends ContentCollector {
                 implementor.scrapPublishStartDate(page),
                 implementor.scrapLastUpdatedDate(page)
             ]);
-
-            // HTML 추출
-            //const html = await implementor.extractHtml(page);
-
-            // HTML 파일 저장
-            //const htmlFilePath = await FileUtils.saveHtmlFile(html, platform, titleId);
 
             return {
                 statusCode: 200,

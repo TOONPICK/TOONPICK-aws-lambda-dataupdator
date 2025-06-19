@@ -27,10 +27,10 @@ export class WebtoonUpdateCollector extends ContentCollector {
             // 페이지 로드
             await implementor.loadPage(page, titleId);
             
-            // 업데이트 정보 수집
-            const [latestFreeEpisode, paidEpisodes, lastUpdatedDate] = await Promise.all([
-                implementor.scrapLatestFreeEpisode(page),
-                implementor.scrapPaidEpisodes(page),
+            // 최신 무료/유료(미리보기) 회차 3개씩만 수집
+            const [latestFreeEpisodes, latestPreviewEpisodes, lastUpdatedDate] = await Promise.all([
+                implementor.scrapLatestFreeEpisodes(page, 3),
+                implementor.scrapLatestPreviewEpisodes(page, 3),
                 implementor.scrapLastUpdatedDate(page)
             ]);
 
@@ -39,8 +39,8 @@ export class WebtoonUpdateCollector extends ContentCollector {
                 data: {
                     titleId,
                     platform,
-                    latestFreeEpisode,
-                    paidEpisodes,
+                    latestFreeEpisodes,
+                    latestPreviewEpisodes,
                     lastUpdatedDate
                 }
             };
