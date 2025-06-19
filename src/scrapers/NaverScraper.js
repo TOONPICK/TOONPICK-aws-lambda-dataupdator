@@ -1,11 +1,10 @@
-import { ScrapingImplementor } from './scrapingImplementor.js';
-import { HtmlFormatter } from '../../utils/htmlFormatter.js';
+import { ScrapingImplementor } from './ScrapingImplementor.js';
 
 /**
  * 네이버 웹툰 스크래핑을 구현하는 클래스입니다.
  * @extends ScrapingImplementor
  */
-export class NaverScrapingImplementor extends ScrapingImplementor {
+export class NaverScraper extends ScrapingImplementor {
     #currentTitleId = null;
     #SELECTORS = {
         // 기본 정보
@@ -79,26 +78,6 @@ export class NaverScrapingImplementor extends ScrapingImplementor {
             await this.#loadDynamicContent(page);
         } catch (error) {
             throw new Error(`페이지 로드 실패: ${error.message}`);
-        }
-    }
-
-    /**
-     * 웹툰 페이지의 HTML을 추출하고 포맷팅합니다.
-     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
-     * @returns {Promise<string>} 포맷팅된 HTML
-     * @throws {Error} HTML 추출 실패 시 에러
-     */
-    async extractHtml(page) {
-        try {
-            const html = await page.evaluate(() => {
-                const styleElements = document.querySelectorAll('style');
-                styleElements.forEach(style => style.remove());
-                const doctype = new XMLSerializer().serializeToString(document.doctype);
-                return doctype + document.documentElement.outerHTML;
-            });
-            return await HtmlFormatter.format(html);
-        } catch (error) {
-            throw new Error(`HTML 추출 실패: ${error.message}`);
         }
     }
 

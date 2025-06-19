@@ -1,13 +1,12 @@
-import { ContentCollector } from './contentCollector.js';
+import { ContentCollector } from './ContentCollector.js';
+import { ScraperFactory } from '../scrapers/ScraperFactory.js';
 
 export class WebtoonUpdateCollector extends ContentCollector {
-    /**
-     * @param {import('./scrapperFactory.js').ScrapperFactory} scrapperFactory
-     */
-    constructor(scrapperFactory) {
+    constructor() {
         super();
-        this.scrapperFactory = scrapperFactory;
+        this.scraperFactory = WebtoonUpdateCollector.scraperFactoryInstance;
     }
+    static scraperFactoryInstance = new ScraperFactory();
 
     /**
      * @param {import('puppeteer-core').Browser} browser
@@ -16,7 +15,7 @@ export class WebtoonUpdateCollector extends ContentCollector {
      */
     async execute(browser, data) {
         const { titleId, platform } = data;
-        const implementor = this.scrapperFactory.getScrapper(platform);
+        const implementor = this.scraperFactory.getScraper(platform);
         const page = await browser.newPage();
         try {
             // 페이지 로드
