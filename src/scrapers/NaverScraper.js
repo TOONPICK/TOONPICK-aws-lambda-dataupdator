@@ -1,4 +1,4 @@
-import { ScrapingImplementor } from './ScrapingImplementor.js';
+import { ScrapingImplementor } from './scrapingImplementor.js';
 
 /**
  * 네이버 웹툰 스크래핑을 구현하는 클래스입니다.

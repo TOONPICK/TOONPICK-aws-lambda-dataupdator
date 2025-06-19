@@ -1,4 +1,4 @@
-import { NaverScraper } from './NaverScraper.js';
+import { NaverScraper } from './naverScraper.js';
 
 export class ScraperFactory {
     constructor() {
@@ -10,7 +10,7 @@ export class ScraperFactory {
     /**
      * 플랫폼에 맞는 ScrapingImplementor를 반환합니다.
      * @param {string} platform
-     * @returns {import('./ScrapingImplementor.js').ScrapingImplementor}
+     * @returns {import('./scrapingImplementor.js').ScrapingImplementor}
      */
     getScraper(platform) {
         const key = platform ? platform.toUpperCase() : undefined;
@@ -24,7 +24,7 @@ export class ScraperFactory {
     /**
      * 새로운 Scraper를 등록합니다.
      * @param {string} platform
-     * @param {import('./ScrapingImplementor.js').ScrapingImplementor} scraper
+     * @param {import('./scrapingImplementor.js').ScrapingImplementor} scraper
      */
     registerScraper(platform, scraper) {
         const key = platform ? platform.toUpperCase() : undefined;

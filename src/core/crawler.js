@@ -1,5 +1,5 @@
-import { WebtoonContentCollector } from '../collectors/WebtoonContentCollector.js';
-import { WebtoonUpdateCollector } from '../collectors/WebtoonUpdateCollector.js';
+import { WebtoonContentCollector } from '../collectors/webtoonContentCollector.js';
+import { WebtoonUpdateCollector } from '../collectors/webtoonUpdateCollector.js';
 
 export class Crawler {
     /**

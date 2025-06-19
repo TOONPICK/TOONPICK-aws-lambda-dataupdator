@@ -1,5 +1,5 @@
-import { ContentCollector } from './ContentCollector.js';
-import { ScraperFactory } from '../scrapers/ScraperFactory.js';
+import { ContentCollector } from './contentCollector.js';
+import { ScraperFactory } from '../scrapers/scraperFactory.js';
 
 export class WebtoonUpdateCollector extends ContentCollector {
     constructor() {
