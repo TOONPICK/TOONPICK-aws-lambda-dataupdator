@@ -1,13 +1,10 @@
-// index.js
 import { Crawler } from './src/core/crawler.js';
 import { LambdaBrowser } from './src/browsers/lambdaBrowser.js';
 import { parseCrawlRequest } from './src/types/sqs.js';
-import { loadEnv } from './src/core/envLoader.js';
-import { SSMCoreClient } from './src/core/ssmClient.js';
-import { SQSCoreClient } from './src/core/sqsClient.js';
-import { SlackCoreClient } from './src/core/slackClient.js';
+import { loadEnv } from './src/env/index.js';
+import { SSMCoreClient, SQSCoreClient } from './src/aws/index.js';
+import { SlackCoreClient } from './src/notification/index.js';
 
-// 메시지 포맷터 예시 (외부에서 정의 가능)
 const sqsMessageFormatter = (payload, type, options) => {
     if (type === 'error') {
         return {

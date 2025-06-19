@@ -21,6 +21,9 @@ mkdir -p $DIST_DIR/src/scrapper
 mkdir -p $DIST_DIR/src/scrapper/platforms
 mkdir -p $DIST_DIR/src/types
 mkdir -p $DIST_DIR/src/utils
+mkdir -p $DIST_DIR/src/aws
+mkdir -p $DIST_DIR/src/notification
+mkdir -p $DIST_DIR/src/env
 
 # Lambda용 package.json 생성 (의존성 제거)
 cat > $DIST_DIR/package.json << 'EOF'
@@ -52,6 +55,9 @@ cp -r src/scrapper/*.js $DIST_DIR/src/scrapper/
 cp -r src/scrapper/platforms/* $DIST_DIR/src/scrapper/platforms/
 cp -r src/types/* $DIST_DIR/src/types/
 cp -r src/utils/* $DIST_DIR/src/utils/
+cp -r src/env $DIST_DIR/src/
+cp -r src/aws $DIST_DIR/src/
+cp -r src/notification $DIST_DIR/src/
 
 # ZIP 파일 생성 (node_modules 제외)
 echo "Lambda 배포 패키지 생성 중..."

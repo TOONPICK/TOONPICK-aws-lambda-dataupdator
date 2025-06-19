@@ -56,6 +56,9 @@ Copy-Item -Path src/scrapper/*.js -Destination $DIST_DIR/src/scrapper
 Copy-Item -Path src/scrapper/platforms/* -Destination $DIST_DIR/src/scrapper/platforms
 Copy-Item -Path src/types/* -Destination $DIST_DIR/src/types
 Copy-Item -Path src/utils/* -Destination $DIST_DIR/src/utils
+Copy-Item -Recurse -Path src/env -Destination $DIST_DIR/src
+Copy-Item -Recurse -Path src/aws -Destination $DIST_DIR/src
+Copy-Item -Recurse -Path src/notification -Destination $DIST_DIR/src
 
 # ZIP 파일 생성 (node_modules 제외)
 Write-Host "Lambda 배포 패키지 생성 중..." -ForegroundColor Yellow
