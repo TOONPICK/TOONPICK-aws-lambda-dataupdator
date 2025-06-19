@@ -14,30 +14,41 @@ export class WebtoonUpdateCollector extends ContentCollector {
      * @returns {Promise<{statusCode: number, data: import('../types/webtoon.js').WebtoonUpdateResult}>}
      */
     async execute(browser, data) {
-        const { titleId, platform } = data;
+        const { titleId, platform, prevEpisodeCount } = data;
         const implementor = this.scraperFactory.getScraper(platform);
         const page = await browser.newPage();
         try {
             // 페이지 로드
             await implementor.loadPage(page, titleId);
-            
-            // 최신 무료/유료(미리보기) 회차 3개씩만 수집
-            const [latestFreeEpisodes, latestPreviewEpisodes, lastUpdatedDate] = await Promise.all([
-                implementor.scrapLatestFreeEpisodes(page, 3),
-                implementor.scrapLatestPreviewEpisodes(page, 3),
-                implementor.scrapLastUpdatedDate(page)
-            ]);
+            const currentEpisodeCount = await implementor.scrapEpisodeCount(page);
 
-            return {
-                statusCode: 200,
-                data: {
-                    titleId,
-                    platform,
-                    latestFreeEpisodes,
-                    latestPreviewEpisodes,
-                    lastUpdatedDate
-                }
-            };
+            if (currentEpisodeCount > prevEpisodeCount) {
+                const newEpisodes = currentEpisodeCount - prevEpisodeCount;
+                const [latestFreeEpisodes, latestPreviewEpisodes, lastUpdatedDate] = await Promise.all([
+                    implementor.scrapLatestFreeEpisodes(page, newEpisodes),
+                    implementor.scrapLatestPreviewEpisodes(page, newEpisodes),
+                    implementor.scrapLastUpdatedDate(page)
+                ]);
+                return {
+                    statusCode: 200,
+                    data: {
+                        titleId,
+                        platform,
+                        latestFreeEpisodes,
+                        latestPreviewEpisodes,
+                        lastUpdatedDate
+                    }
+                };
+            } else {
+                return {
+                    statusCode: 204,
+                    data: {
+                        titleId,
+                        platform,
+                        message: 'No new episodes. Collection is on hold.'
+                    }
+                };
+            }
         } finally {
             await page.close();
         }
