@@ -17,13 +17,14 @@ echo "=== Lambda 함수 배포 패키지 생성 ==="
 mkdir -p $DIST_DIR/src/browsers
 mkdir -p $DIST_DIR/src/config
 mkdir -p $DIST_DIR/src/core
-mkdir -p $DIST_DIR/src/scrapper
-mkdir -p $DIST_DIR/src/scrapper/platforms
+mkdir -p $DIST_DIR/src/scrapers
+mkdir -p $DIST_DIR/src/scrapers/platforms
 mkdir -p $DIST_DIR/src/types
 mkdir -p $DIST_DIR/src/utils
 mkdir -p $DIST_DIR/src/aws
 mkdir -p $DIST_DIR/src/notification
 mkdir -p $DIST_DIR/src/env
+mkdir -p $DIST_DIR/src/collectors
 
 # Lambda용 package.json 생성 (의존성 제거)
 cat > $DIST_DIR/package.json << 'EOF'
@@ -51,13 +52,15 @@ cp index.js $DIST_DIR/
 cp -r src/browsers/* $DIST_DIR/src/browsers/
 cp -r src/config/* $DIST_DIR/src/config/
 cp -r src/core/* $DIST_DIR/src/core/
-cp -r src/scrapper/*.js $DIST_DIR/src/scrapper/
-cp -r src/scrapper/platforms/* $DIST_DIR/src/scrapper/platforms/
+cp -r src/scrapers/*.js $DIST_DIR/src/scrapers/
+cp -r src/scrapers/platforms/* $DIST_DIR/src/scrapers/platforms/
 cp -r src/types/* $DIST_DIR/src/types/
 cp -r src/utils/* $DIST_DIR/src/utils/
 cp -r src/env $DIST_DIR/src/
 cp -r src/aws $DIST_DIR/src/
 cp -r src/notification $DIST_DIR/src/
+cp -r src/collectors/* $DIST_DIR/src/collectors/
+cp -r src/scrapers/* $DIST_DIR/src/scrapers/
 
 # ZIP 파일 생성 (node_modules 제외)
 echo "Lambda 배포 패키지 생성 중..."

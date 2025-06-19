@@ -19,10 +19,11 @@ Write-Host "=== Lambda 함수 배포 패키지 생성 ===" -ForegroundColor Gree
 New-Item -ItemType Directory -Force -Path $DIST_DIR/src/browsers | Out-Null
 New-Item -ItemType Directory -Force -Path $DIST_DIR/src/config | Out-Null
 New-Item -ItemType Directory -Force -Path $DIST_DIR/src/core | Out-Null
-New-Item -ItemType Directory -Force -Path $DIST_DIR/src/scrapper | Out-Null
-New-Item -ItemType Directory -Force -Path $DIST_DIR/src/scrapper/platforms | Out-Null
+New-Item -ItemType Directory -Force -Path $DIST_DIR/src/scrapers | Out-Null
+New-Item -ItemType Directory -Force -Path $DIST_DIR/src/scrapers/platforms | Out-Null
 New-Item -ItemType Directory -Force -Path $DIST_DIR/src/types | Out-Null
 New-Item -ItemType Directory -Force -Path $DIST_DIR/src/utils | Out-Null
+New-Item -ItemType Directory -Force -Path $DIST_DIR/src/collectors | Out-Null
 
 # Lambda용 package.json 생성 (BOM 없이) - 의존성 제거
 $packageJson = @"
@@ -59,6 +60,8 @@ Copy-Item -Path src/utils/* -Destination $DIST_DIR/src/utils
 Copy-Item -Recurse -Path src/env -Destination $DIST_DIR/src
 Copy-Item -Recurse -Path src/aws -Destination $DIST_DIR/src
 Copy-Item -Recurse -Path src/notification -Destination $DIST_DIR/src
+Copy-Item -Path src/collectors/* -Destination $DIST_DIR/src/collectors
+Copy-Item -Path src/scrapers/* -Destination $DIST_DIR/src/scrapers
 
 # ZIP 파일 생성 (node_modules 제외)
 Write-Host "Lambda 배포 패키지 생성 중..." -ForegroundColor Yellow
