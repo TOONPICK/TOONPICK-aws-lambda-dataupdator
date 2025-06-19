@@ -12,7 +12,8 @@ async function main() {
                     eventType: 'WEBTOON_UPDATE',
                     data: {
                         titleId: '747269',
-                        platform: 'NAVER'
+                        platform: 'NAVER',
+                        prevEpisodeCount: 267
                     }
                 })
             }
