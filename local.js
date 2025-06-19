@@ -12,19 +12,22 @@ async function main() {
                     eventType: 'WEBTOON_UPDATE',
                     data: [
                         {
-                            titleId: '747269',
+                            id: 747269,
+                            url: 'https://comic.naver.com/webtoon/list?titleId=747269',
                             platform: 'NAVER',
-                            prevEpisodeCount: 267
+                            episodeCount: 267
                         },
                         {
-                            titleId: '821597',
+                            id: 821597,
+                            url: 'https://comic.naver.com/webtoon/list?titleId=821597',
                             platform: 'NAVER',
-                            prevEpisodeCount: 77
+                            episodeCount: 77
                         },
                         {
-                            titleId: '832557',
+                            id: 832557,
+                            url: 'https://comic.naver.com/webtoon/list?titleId=832557',
                             platform: 'NAVER',
-                            prevEpisodeCount: 42
+                            episodeCount: 42
                         }
                     ]
                 })

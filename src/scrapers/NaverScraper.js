@@ -54,20 +54,15 @@ export class NaverScraper extends ScrapingImplementor {
     /**
      * 웹툰 페이지를 로드하고 필요한 요소들이 로드될 때까지 대기합니다.
      * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
-     * @param {string} titleId - 웹툰의 고유 ID
+     * @param {string} url - 웹툰의 링크(URL)
      * @throws {Error} 페이지 로드 실패 시 에러
      */
-    async loadPage(page, titleId) {
+    async loadPage(page, url) {
         try {
-            if (this.#currentTitleId === titleId) {
-                return;
-            }
-
-            await page.goto(this.getWebtoonUrl(titleId), {
+            await page.goto(url, {
                 waitUntil: 'networkidle2',
                 timeout: 30000
             });
-            this.#currentTitleId = titleId;
 
             await Promise.all([
                 page.waitForSelector(this.#SELECTORS.TITLE, { timeout: 10000 }),
@@ -447,7 +442,7 @@ export class NaverScraper extends ScrapingImplementor {
      * @param {string} titleId - 웹툰의 고유 ID
      * @returns {string} 웹툰 URL
      */
-    getWebtoonUrl(titleId) {
+    #getWebtoonUrl(titleId) {
         return `https://comic.naver.com/webtoon/list?titleId=${titleId}`;
     }
 

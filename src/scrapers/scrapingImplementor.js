@@ -7,10 +7,10 @@ export class ScrapingImplementor {
     /**
      * 웹툰 페이지를 로드하고 필요한 요소들이 로드될 때까지 대기합니다.
      * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
-     * @param {string} titleId - 웹툰의 고유 ID
+     * @param {string} url - 웹툰의 링크(URL)
      * @returns {Promise<void>}
      */
-    async loadPage(page, titleId) {
+    async loadPage(page, url) {
         throw new Error('loadPage 메서드를 구현해야 합니다.');
     }
 
@@ -120,15 +120,6 @@ export class ScrapingImplementor {
      */
     async scrapPublishStartDate(page) {
         throw new Error('scrapPublishStartDate 메서드를 구현해야 합니다.');
-    }
-
-    /**
-     * 웹툰 URL을 생성합니다.
-     * @param {string} titleId - 웹툰 ID
-     * @returns {string} 웹툰 URL
-     */
-    getWebtoonUrl(titleId) {
-        throw new Error('getWebtoonUrl 메서드를 구현해야 합니다.');
     }
 
     /**

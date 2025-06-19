@@ -14,16 +14,16 @@ export class WebtoonUpdateCollector extends ContentCollector {
      * @returns {Promise<{statusCode: number, data: import('../types/webtoon.js').WebtoonUpdateResult}>}
      */
     async execute(browser, data) {
-        const { titleId, platform, prevEpisodeCount } = data;
+        const { id, url, platform, episodeCount } = data;
         const implementor = this.scraperFactory.getScraper(platform);
         const page = await browser.newPage();
         try {
-            // 페이지 로드
-            await implementor.loadPage(page, titleId);
+            // 페이지 로드 (url 직접 사용)
+            await implementor.loadPage(page, url);
             const currentEpisodeCount = await implementor.scrapEpisodeCount(page);
 
-            if (currentEpisodeCount > prevEpisodeCount) {
-                const newEpisodes = currentEpisodeCount - prevEpisodeCount;
+            if (currentEpisodeCount > episodeCount) {
+                const newEpisodes = currentEpisodeCount - episodeCount;
                 const [latestFreeEpisodes, latestPreviewEpisodes, lastUpdatedDate] = await Promise.all([
                     implementor.scrapLatestFreeEpisodes(page, newEpisodes),
                     implementor.scrapLatestPreviewEpisodes(page, newEpisodes),
@@ -32,7 +32,8 @@ export class WebtoonUpdateCollector extends ContentCollector {
                 return {
                     statusCode: 200,
                     data: {
-                        titleId,
+                        id,
+                        url,
                         platform,
                         latestFreeEpisodes,
                         latestPreviewEpisodes,
@@ -43,7 +44,8 @@ export class WebtoonUpdateCollector extends ContentCollector {
                 return {
                     statusCode: 204,
                     data: {
-                        titleId,
+                        id,
+                        url,
                         platform,
                         message: 'No new episodes. Collection is on hold.'
                     }
