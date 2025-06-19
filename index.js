@@ -2,83 +2,126 @@
 import { Crawler } from './src/core/crawler.js';
 import { LambdaBrowser } from './src/browsers/lambdaBrowser.js';
 import { parseCrawlRequest } from './src/types/sqs.js';
-import { validateEnvironmentVariables } from './src/config/env.js';
-import { SQSService } from './src/utils/sqsService.js';
-import { SlackService } from './src/utils/slackService.js';
+import { loadEnv } from './src/core/envLoader.js';
+import { SSMCoreClient } from './src/core/ssmClient.js';
+import { SQSCoreClient } from './src/core/sqsClient.js';
+import { SlackCoreClient } from './src/core/slackClient.js';
 
-async function validateAndParseRequest(event) {
-    await validateEnvironmentVariables();
-    if (!event.Records || !event.Records[0]) {
-        throw new Error('SQS 메시지가 없습니다.');
+// 메시지 포맷터 예시 (외부에서 정의 가능)
+const sqsMessageFormatter = (payload, type, options) => {
+    if (type === 'error') {
+        return {
+            timestamp: new Date().toISOString(),
+            requestId: options.requestId,
+            error: {
+                message: payload.message,
+                stack: payload.stack,
+                name: payload.name
+            },
+            context: options.context,
+            status: 'failed'
+        };
     }
-    const record = event.Records[0];
-    const request = parseCrawlRequest(record);
-    const requestId = request.requestId || record.messageId || `req-${Date.now()}`;
-    return { request, requestId };
-}
-
-async function runCrawling(request) {
-    const browserType = new LambdaBrowser();
-    const crawler = new Crawler(browserType);
-    return await crawler.execute(request);
-}
-
-function buildContext(request, processingTime) {
     return {
-        platform: request?.data?.platform || 'Unknown',
-        type: request?.data?.type || 'Unknown',
-        processingTime
+        timestamp: new Date().toISOString(),
+        requestId: options.requestId,
+        data: payload,
+        status: 'completed'
     };
-}
+};
 
-async function notifySuccess(result, requestId, context) {
-    const sqsService = new SQSService();
-    const slackService = new SlackService();
-    const sqsResult = await sqsService.sendResult(result, requestId);
-    try {
-        await slackService.sendSuccess(result, requestId, context);
-    } catch (slackError) {
-        console.warn('Slack 알림 전송 실패 (크롤링은 성공):', slackError.message);
+const slackMessageFormatter = (payload, type, options) => {
+    const { requestId, context = {} } = options;
+    if (type === 'error') {
+        return {
+            icon_emoji: ':x:',
+            attachments: [
+                {
+                    color: 'danger',
+                    title: '웹툰 크롤링 실패',
+                    fields: [
+                        { title: '요청 ID', value: requestId, short: true },
+                        { title: '플랫폼', value: context.platform || 'Unknown', short: true },
+                        { title: '에러 메시지', value: payload.message, short: false },
+                        { title: '에러 타입', value: payload.name || 'Unknown', short: true }
+                    ],
+                    footer: 'Webtoon Crawler',
+                    ts: Math.floor(Date.now() / 1000)
+                }
+            ]
+        };
     }
-    return sqsResult;
-}
-
-async function notifyError(error, requestId, context) {
-    const sqsService = new SQSService();
-    const slackService = new SlackService();
-    try {
-        await sqsService.sendError(error, requestId, context);
-        try {
-            await slackService.sendError(error, requestId, context);
-        } catch (slackError) {
-            console.warn('Slack 에러 알림 전송 실패:', slackError.message);
-        }
-    } catch (notificationError) {
-        console.error('알림 전송 실패:', notificationError);
-    }
-}
+    // 성공 메시지
+    return {
+        icon_emoji: ':white_check_mark:',
+        attachments: [
+            {
+                color: 'good',
+                title: '웹툰 크롤링 성공',
+                fields: [
+                    { title: '요청 ID', value: requestId, short: true },
+                    { title: '플랫폼', value: context.platform || 'Unknown', short: true },
+                    { title: '수집된 데이터 수', value: Array.isArray(payload) ? payload.length : 1, short: true },
+                    { title: '처리 시간', value: context.processingTime ? `${context.processingTime}ms` : 'Unknown', short: true }
+                ],
+                footer: 'Webtoon Crawler',
+                ts: Math.floor(Date.now() / 1000)
+            }
+        ]
+    };
+};
 
 export async function handler(event) {
     const startTime = Date.now();
     let requestId = null;
     let request = null;
+    // 환경변수 취합 (SSM + process.env)
+    const ssmClient = new SSMCoreClient();
+    const env = await loadEnv({ sources: ['ssm', 'process'], ssmClient });
+    // SQS/Slack 클라이언트 인스턴스화
+    const sqsClient = new SQSCoreClient({
+        region: env.SQS_RESULT_QUEUE_REGION,
+        queueUrl: env.SQS_RESULT_QUEUE_URL,
+        isFifoQueue: env.SQS_RESULT_QUEUE_URL?.endsWith('.fifo'),
+        messageFormatter: sqsMessageFormatter
+    });
+    const slackClient = new SlackCoreClient({
+        webhookUrl: env.SLACK_WEBHOOK_URL,
+        channel: env.SLACK_CHANNEL,
+        username: env.SLACK_USERNAME,
+        messageFormatter: slackMessageFormatter
+    });
     try {
-        // 환경 변수 검증 및 요청 파싱
-        ({ request, requestId } = await validateAndParseRequest(event));
+        // 요청 파싱
+        if (!event.Records || !event.Records[0]) throw new Error('SQS 메시지가 없습니다.');
+        const record = event.Records[0];
+        request = parseCrawlRequest(record);
+        requestId = request.requestId || record.messageId || `req-${Date.now()}`;
         console.log(`크롤링 요청 시작: ${requestId}`, {
             platform: request.data?.platform,
             type: request.data?.type,
             url: request.data?.url
         });
         // 크롤링 실행
-        const result = await runCrawling(request);
+        const browserType = new LambdaBrowser();
+        const crawler = new Crawler(browserType);
+        const result = await crawler.execute(request);
         const processingTime = Date.now() - startTime;
-        const context = buildContext(request, processingTime);
-        // 결과 알림
-        const sqsResult = await notifySuccess(result, requestId, context);
+        const context = {
+            platform: request.data?.platform || 'Unknown',
+            type: request.data?.type || 'Unknown',
+            processingTime
+        };
+        // SQS/Slack 알림
+        const sqsResult = await sqsClient.send(result, { requestId, type: 'result' });
+        try {
+            await slackClient.send(result, 'success', { requestId, context });
+        } catch (slackError) {
+            console.warn('Slack 알림 전송 실패 (크롤링은 성공):', slackError.message);
+        }
         console.log(`크롤링 완료: ${requestId}`, {
             processingTime,
-            sqsMessageId: sqsResult.messageId,
+            sqsMessageId: sqsResult.MessageId,
             dataCount: Array.isArray(result) ? result.length : 1
         });
         return {
@@ -87,19 +130,32 @@ export async function handler(event) {
                 success: true,
                 requestId,
                 processingTime,
-                sqsMessageId: sqsResult.messageId,
+                sqsMessageId: sqsResult.MessageId,
                 dataCount: Array.isArray(result) ? result.length : 1
             })
         };
     } catch (error) {
         const processingTime = Date.now() - startTime;
-        const context = buildContext(request, processingTime);
+        const context = {
+            platform: request?.data?.platform || 'Unknown',
+            type: request?.data?.type || 'Unknown',
+            processingTime
+        };
         console.error(`크롤링 실패: ${requestId}`, {
             error: error.message,
             stack: error.stack,
             processingTime
         });
-        await notifyError(error, requestId, context);
+        try {
+            await sqsClient.send(error, { requestId, type: 'error', context });
+            try {
+                await slackClient.send(error, 'error', { requestId, context });
+            } catch (slackError) {
+                console.warn('Slack 에러 알림 전송 실패:', slackError.message);
+            }
+        } catch (notificationError) {
+            console.error('알림 전송 실패:', notificationError);
+        }
         return {
             statusCode: 500,
             body: JSON.stringify({
