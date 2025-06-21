@@ -2,9 +2,9 @@ import { ContentCollector } from './contentCollector.js';
 import { ScraperFactory } from '../scrapers/scraperFactory.js';
 
 export class WebtoonUpdateCollector extends ContentCollector {
-    constructor() {
+    constructor(scraperFactory) {
         super();
-        this.scraperFactory = WebtoonUpdateCollector.scraperFactoryInstance;
+        this.scraperFactory = scraperFactory || WebtoonUpdateCollector.scraperFactoryInstance;
     }
     static scraperFactoryInstance = new ScraperFactory();
 
@@ -24,19 +24,22 @@ export class WebtoonUpdateCollector extends ContentCollector {
 
             if (currentEpisodeCount > episodeCount) {
                 const newEpisodes = currentEpisodeCount - episodeCount;
-                const [latestFreeEpisodes, latestPreviewEpisodes, lastUpdatedDate] = await Promise.all([
+                const [freeEpisodes, paidEpisodes, lastUpdatedDate] = await Promise.all([
                     implementor.scrapLatestFreeEpisodes(page, newEpisodes),
-                    implementor.scrapLatestPreviewEpisodes(page, newEpisodes),
+                    implementor.scrapLatestPaidEpisodes(page, newEpisodes),
                     implementor.scrapLastUpdatedDate(page)
                 ]);
+                
+                // 무료와 유료 에피소드를 통합
+                const episodes = [...freeEpisodes, ...paidEpisodes];
+                
                 return {
                     statusCode: 200,
                     data: {
                         id,
                         url,
                         platform,
-                        latestFreeEpisodes,
-                        latestPreviewEpisodes,
+                        episodes,
                         lastUpdatedDate
                     }
                 };
@@ -47,6 +50,7 @@ export class WebtoonUpdateCollector extends ContentCollector {
                         id,
                         url,
                         platform,
+                        episodes: [],
                         message: 'No new episodes. Collection is on hold.'
                     }
                 };

@@ -9,7 +9,7 @@ async function main() {
                 messageId: 'test-1',
                 body: JSON.stringify({
                     requestId: 'test-1',
-                    eventType: 'WEBTOON_UPDATE',
+                    eventType: 'WEBTOON_CONTENT',
                     data: [
                         {
                             id: 747269,

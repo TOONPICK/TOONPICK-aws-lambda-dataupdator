@@ -5,7 +5,6 @@ import { ScrapingImplementor } from './scrapingImplementor.js';
  * @extends ScrapingImplementor
  */
 export class NaverScraper extends ScrapingImplementor {
-    #currentTitleId = null;
     #SELECTORS = {
         // 기본 정보
         TITLE: '.EpisodeListInfo__title--mYLjC',
@@ -90,6 +89,36 @@ export class NaverScraper extends ScrapingImplementor {
             );
         } catch (error) {
             throw new Error(`제목 추출 실패: ${error.message}`);
+        }
+    }
+
+    /**
+     * 웹툰의 URL을 추출합니다.
+     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
+     * @returns {Promise<string>} 웹툰 URL
+     * @throws {Error} URL 추출 실패 시 에러
+     */
+    async scrapUrl(page) {
+        try {
+            return page.url();
+        } catch (error) {
+            throw new Error(`URL 추출 실패: ${error.message}`);
+        }
+    }
+
+    /**
+     * 웹툰의 모바일 URL을 추출합니다.
+     * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
+     * @returns {Promise<string>} 웹툰 모바일 URL
+     * @throws {Error} 모바일 URL 추출 실패 시 에러
+     */
+    async scrapMobileUrl(page) {
+        try {
+            const currentUrl = page.url();
+            // 네이버 웹툰의 경우 모바일 URL은 m.com.naver.com으로 변경
+            return currentUrl.replace('comic.naver.com', 'm.com.naver.com');
+        } catch (error) {
+            throw new Error(`모바일 URL 추출 실패: ${error.message}`);
         }
     }
 
@@ -272,9 +301,9 @@ export class NaverScraper extends ScrapingImplementor {
     }
 
     /**
-     * 최신 미리보기 회차 N개를 수집합니다.
+     * 최신 유료 회차 N개를 수집합니다.
      */
-    async scrapLatestPreviewEpisodes(page, count = 1) {
+    async scrapLatestPaidEpisodes(page, count = 1) {
         try {
             const totalEpisodes = await this.scrapEpisodeCount(page);
             if (!totalEpisodes) {
@@ -410,8 +439,11 @@ export class NaverScraper extends ScrapingImplementor {
      */
     async scrapPublishStartDate(page) {
         try {
+
+            return null;
+            
             const currentUrl = await page.url();
-            const currentTitleId = this.#currentTitleId;
+            const currentTitleId = await this.scrapUniqueId(page);
 
             // 첫 화 페이지로 이동
             await this.loadPage(page, currentTitleId);
@@ -747,10 +779,20 @@ export class NaverScraper extends ScrapingImplementor {
                     const episodeNumber = link ? parseInt(new URLSearchParams(link.split('?')[1]).get('no')) : null;
                     const dateText = dateElement.textContent.trim();
 
+                    // URL에서 week 파라미터 제거
+                    let cleanLink = `https://comic.naver.com${link}`;
+                    try {
+                        const url = new URL(cleanLink);
+                        url.searchParams.delete('week');
+                        cleanLink = url.toString();
+                    } catch (error) {
+                        // URL 파싱 실패 시 원본 링크 사용
+                    }
+
                     return {
                         title: titleElement.textContent.trim(),
                         dateText: dateText,
-                        link: `https://comic.naver.com${link}`,
+                        link: cleanLink,
                         episodeNumber: episodeNumber,
                         thumbnailUrl: thumbnailElement ? thumbnailElement.getAttribute('src') : null
                     };
@@ -768,9 +810,24 @@ export class NaverScraper extends ScrapingImplementor {
             const dateMatch = dateText.match(/\d{2}\.\d{2}\.\d{2}/);
             const uploadDate = dateMatch ? this.#formatDate(dateText) : null;
 
+            // 모바일 URL 생성
+            let mobileUrl = null;
+            try {
+                if (episode.link && episode.episodeNumber) {
+                    const titleId = episode.link.match(/titleId=(\d+)/)?.[1];
+                    if (titleId) {
+                        mobileUrl = `https://m.comic.naver.com/external/appLaunchBridge?type=ARTICLE_DETAIL&titleId=${titleId}&no=${episode.episodeNumber}`;
+                    }
+                }
+            } catch (error) {
+                // 모바일 URL 생성 실패 시 null 유지
+            }
+
             return {
                 ...rest,
-                uploadDate
+                uploadDate,
+                mobileUrl,
+                pricingType: 'FREE'
             };
         });
     }
@@ -797,10 +854,20 @@ export class NaverScraper extends ScrapingImplementor {
                     const link = linkElement.getAttribute('href');
                     const dateText = dateElement.textContent.trim();
 
+                    // URL에서 week 파라미터 제거
+                    let cleanLink = `https://comic.naver.com${link}`;
+                    try {
+                        const url = new URL(cleanLink);
+                        url.searchParams.delete('week');
+                        cleanLink = url.toString();
+                    } catch (error) {
+                        // URL 파싱 실패 시 원본 링크 사용
+                    }
+
                     return {
                         title: titleElement.textContent.trim(),
                         dateText: dateText,
-                        link: `https://comic.naver.com${link}`,
+                        link: cleanLink,
                         thumbnailUrl: thumbnailElement ? thumbnailElement.getAttribute('src') : null
                     };
                 }).filter(episode => episode !== null);
@@ -826,11 +893,26 @@ export class NaverScraper extends ScrapingImplementor {
             // 최신화부터 내림차순으로 번호 부여
             const episodeNumber = totalEpisodes - index;
 
+            // 모바일 URL 생성
+            let mobileUrl = null;
+            try {
+                if (episode.link && episodeNumber) {
+                    const titleId = episode.link.match(/titleId=(\d+)/)?.[1];
+                    if (titleId) {
+                        mobileUrl = `https://m.comic.naver.com/external/appLaunchBridge?type=ARTICLE_DETAIL&titleId=${titleId}&no=${episodeNumber}`;
+                    }
+                }
+            } catch (error) {
+                // 모바일 URL 생성 실패 시 null 유지
+            }
+
             return {
                 ...rest,
                 uploadDate,
                 daysUntilFree,
-                episodeNumber
+                episodeNumber,
+                mobileUrl,
+                pricingType: 'PAID'
             };
         });
     }

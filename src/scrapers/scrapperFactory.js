@@ -1,8 +1,8 @@
 import { NaverScraper } from './naverScraper.js';
 
-export class ScrapperFactory {
+export class ScraperFactory {
     constructor() {
-        this.scrappers = new Map([
+        this.scrapers = new Map([
             ['NAVER', new NaverScraper()]
         ]);
     }
@@ -10,24 +10,24 @@ export class ScrapperFactory {
     /**
      * 플랫폼에 맞는 ScrapingImplementor를 반환합니다.
      * @param {string} platform
-     * @returns {import('./naverScraper.js').NaverScraper}
+     * @returns {import('./scrapingImplementor.js').ScrapingImplementor}
      */
-    getScrapper(platform) {
+    getScraper(platform) {
         const key = platform ? platform.toUpperCase() : undefined;
-        const scrapper = this.scrappers.get(key);
-        if (!scrapper) {
+        const scraper = this.scrapers.get(key);
+        if (!scraper) {
             throw new Error(`지원하지 않는 플랫폼입니다: ${platform}`);
         }
-        return scrapper;
+        return scraper;
     }
 
     /**
-     * 새로운 Scrapper를 등록합니다.
+     * 새로운 Scraper를 등록합니다.
      * @param {string} platform
-     * @param {import('./naverScraper.js').NaverScraper} scrapper
+     * @param {import('./scrapingImplementor.js').ScrapingImplementor} scraper
      */
-    registerScrapper(platform, scrapper) {
+    registerScraper(platform, scraper) {
         const key = platform ? platform.toUpperCase() : undefined;
-        this.scrappers.set(key, scrapper);
+        this.scrapers.set(key, scraper);
     }
 } 

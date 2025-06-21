@@ -144,7 +144,7 @@ export class ScrapingImplementor {
      * 최신 무료 회차 N개를 수집합니다.
      * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
      * @param {number} count - 수집할 회차 개수 (기본값: 1)
-     * @returns {Promise<Array<{ title: string, uploadDate: string, link: string, episodeNumber: number, thumbnailUrl: string }>>}
+     * @returns {Promise<Array<import('../types/webtoon.js').WebtoonEpisode>>}
      * 실제 수집 개수는 N보다 적을 수 있습니다.
      */
     async scrapLatestFreeEpisodes(page, count = 1) {
@@ -152,20 +152,20 @@ export class ScrapingImplementor {
     }
 
     /**
-     * 최신 미리보기 회차 N개를 수집합니다.
+     * 최신 유료 회차 N개를 수집합니다.
      * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
      * @param {number} count - 수집할 회차 개수 (기본값: 1)
-     * @returns {Promise<Array<{ title: string, uploadDate: string, link: string, episodeNumber: number, thumbnailUrl: string }>>}
+     * @returns {Promise<Array<import('../types/webtoon.js').WebtoonEpisode>>}
      * 실제 수집 개수는 N보다 적을 수 있습니다.
      */
-    async scrapLatestPreviewEpisodes(page, count = 1) {
-        throw new Error('scrapLatestPreviewEpisodes 메서드를 구현해야 합니다.');
+    async scrapLatestPaidEpisodes(page, count = 1) {
+        throw new Error('scrapLatestPaidEpisodes 메서드를 구현해야 합니다.');
     }
 
     /**
      * 모든 무료 회차 정보를 수집합니다.
      * @param {import('puppeteer-core').Page} page
-     * @returns {Promise<Array<{ title: string, uploadDate: string, link: string, episodeNumber: number, thumbnailUrl: string }>>}
+     * @returns {Promise<Array<import('../types/webtoon.js').WebtoonEpisode>>}
      */
     async scrapFreeEpisodes(page) {
         throw new Error('scrapFreeEpisodes 메서드를 구현해야 합니다.');
@@ -174,7 +174,7 @@ export class ScrapingImplementor {
     /**
      * 모든 유료 회차 정보를 수집합니다.
      * @param {import('puppeteer-core').Page} page
-     * @returns {Promise<Array<{ title: string, uploadDate: string, link: string, episodeNumber: number, thumbnailUrl: string }>>}
+     * @returns {Promise<Array<import('../types/webtoon.js').WebtoonEpisode>>}
      */
     async scrapPaidEpisodes(page) {
         throw new Error('scrapPaidEpisodes 메서드를 구현해야 합니다.');

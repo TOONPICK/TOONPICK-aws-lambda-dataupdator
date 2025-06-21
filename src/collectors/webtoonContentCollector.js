@@ -2,9 +2,9 @@ import { ContentCollector } from './contentCollector.js';
 import { ScraperFactory } from '../scrapers/scraperFactory.js';
 
 export class WebtoonContentCollector extends ContentCollector {
-    constructor() {
+    constructor(scraperFactory) {
         super();
-        this.scraperFactory = WebtoonContentCollector.scraperFactoryInstance;
+        this.scraperFactory = scraperFactory || WebtoonContentCollector.scraperFactoryInstance;
     }
     static scraperFactoryInstance = new ScraperFactory();
 
@@ -14,12 +14,12 @@ export class WebtoonContentCollector extends ContentCollector {
      * @returns {Promise<{statusCode: number, data: import('../types/webtoon.js').WebtoonScrapResult}>}
      */
     async execute(browser, data) {
-        const { titleId, platform } = data;
+        const { id, url, platform, episodeCount } = data;
         const implementor = this.scraperFactory.getScraper(platform);
         const page = await browser.newPage();
         try {
             // 페이지 로드
-            await implementor.loadPage(page, titleId);
+            await implementor.loadPage(page, url);
             
             // 기본 정보 수집
             const [title, uniqueId, description, thumbnailUrl] = await Promise.all([
@@ -65,9 +65,13 @@ export class WebtoonContentCollector extends ContentCollector {
                 implementor.scrapLastUpdatedDate(page)
             ]);
 
+            const episodes = [...freeEpisodes, ...paidEpisodes];
+
             return {
                 statusCode: 200,
                 data: {
+                    id,
+                    url,
                     title,
                     uniqueId,
                     platform,
@@ -83,8 +87,7 @@ export class WebtoonContentCollector extends ContentCollector {
                     latestFreeEpisode,
                     publishStartDate,
                     lastUpdatedDate,
-                    freeEpisodes,
-                    paidEpisodes,
+                    episodes,   
                     relatedNovels,
                     relatedWebtoonIds
                 }

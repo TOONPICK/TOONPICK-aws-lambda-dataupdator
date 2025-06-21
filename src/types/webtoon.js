@@ -3,6 +3,10 @@
  */
 
 /**
+ * @typedef {'FREE' | 'PAID'} EpisodePricingType
+ */
+
+/**
  * @typedef {Object} WebtoonData
  * @property {string} titleId - 웹툰의 titleId
  * @property {WebtoonPlatform} [platform='NAVER'] - 웹툰 플랫폼
@@ -15,6 +19,9 @@
  * @property {string} link - 에피소드 링크
  * @property {number} episodeNumber - 에피소드 번호
  * @property {string} thumbnailUrl - 썸네일 URL
+ * @property {EpisodePricingType} pricingType - 유료/무료 구분
+ * @property {number|null} [daysUntilFree] - 무료화까지 남은 일수 (유료회차인 경우)
+ * @property {string|null} [mobileUrl] - 모바일 URL
  */
 
 /**
@@ -82,6 +89,16 @@
  */
 
 /**
+ * @typedef {Object} WebtoonUpdateResult
+ * @property {string} id - 웹툰 ID
+ * @property {string} url - 웹툰 URL
+ * @property {WebtoonPlatform} platform - 웹툰 플랫폼
+ * @property {WebtoonEpisode[]} episodes - 최신 에피소드 목록 (무료/유료 통합)
+ * @property {string} lastUpdatedDate - 마지막 업데이트 날짜
+ * @property {string} [message] - 메시지 (업데이트가 없을 경우)
+ */
+
+/**
  * 웹툰 데이터를 Java에서 기대하는 형식으로 변환합니다.
  * @param {Object} rawData - 크롤링된 원본 데이터
  * @param {string} eventType - 이벤트 타입
@@ -114,7 +131,10 @@ export function formatWebtoonData(rawData, eventType) {
             thumbnailUrl: episode.thumbnailUrl || episode.thumbnail || episode.image,
             uploadDate: episode.uploadDate || episode.date || episode.createdAt,
             episodeNumber: episode.episodeNumber || episode.number || episode.no,
-            url: episode.url || episode.link
+            url: episode.url || episode.link,
+            pricingType: episode.pricingType || 'FREE',
+            daysUntilFree: episode.daysUntilFree || null,
+            mobileUrl: episode.mobileUrl || null
         }));
     }
     
