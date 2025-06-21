@@ -7,10 +7,10 @@ export class ScrapingImplementor {
     // 기본 성능 설정 (밀리초 단위)
     #TIMEOUT_CONFIG = {
         PAGE_LOAD: 10000,           // 페이지 로드 타임아웃
-        SELECTOR_WAIT: 5000,        // 셀렉터 대기 타임아웃
+        SELECTOR_WAIT: 1000,        // 셀렉터 대기 타임아웃
         NAVIGATION_WAIT: 10000,     // 페이지 이동 타임아웃
-        BEFORE_NAVIGATION: 300,     // 페이지 이동 전 대기
-        AFTER_NAVIGATION: 500,      // 페이지 이동 후 대기
+        BEFORE_NAVIGATION: 100,     // 페이지 이동 전 대기
+        AFTER_NAVIGATION: 300,      // 페이지 이동 후 대기
         ERROR_RECOVERY: 500,        // 에러 복구 대기
         DYNAMIC_CONTENT: 300,       // 동적 컨텐츠 로드 대기
         SCROLL_WAIT: 300            // 스크롤 후 대기

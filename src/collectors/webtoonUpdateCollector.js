@@ -46,6 +46,7 @@ export class WebtoonUpdateCollector extends ContentCollector {
                         url,
                         platform,
                         episodes,
+                        episodeCount: currentEpisodeCount,
                         lastUpdatedDate
                     }
                 };
