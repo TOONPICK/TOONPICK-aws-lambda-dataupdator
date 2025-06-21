@@ -24,7 +24,6 @@ export class NaverScraper extends ScrapingImplementor {
         EPISODE_TITLE: '.EpisodeListList__title--lfIzU',
         EPISODE_DATE: '.date',
         EPISODE_COUNT: '.EpisodeListView__count--fTMc5',
-        EPISODE_NEXT_PAGE: 'a.page_next',
         
         // 미리보기 관련
         PREVIEW_AREA: '.EpisodeListPreview__text_area--WMXZz',
@@ -293,8 +292,54 @@ export class NaverScraper extends ScrapingImplementor {
     async scrapLatestFreeEpisodes(page, count = 1) {
         try {
             await page.waitForSelector(this.#SELECTORS.EPISODE_LIST, { timeout: 10000 });
-            const episodes = await this.#extractFreeEpisodeInfo(page);
-            return episodes.slice(0, count);
+            
+            let collectedEpisodes = [];
+            let currentPage = 1;
+            let hasMorePages = true;
+            let consecutiveFailures = 0;
+            const maxFailures = 2;
+            
+            console.log(`최신 ${count}개 무료 회차 수집 시작`);
+            
+            while (hasMorePages && collectedEpisodes.length < count && consecutiveFailures < maxFailures) {
+                try {
+                    // 현재 페이지의 무료 에피소드 수집
+                    const pageEpisodes = await this.#extractFreeEpisodeInfo(page);
+                    collectedEpisodes = collectedEpisodes.concat(pageEpisodes);
+                    consecutiveFailures = 0; // 성공 시 실패 카운트 리셋
+                    
+                    console.log(`페이지 ${currentPage}: ${pageEpisodes.length}개 에피소드 수집, 총 ${collectedEpisodes.length}개`);
+                    
+                    // 요청된 개수만큼 수집했으면 종료
+                    if (collectedEpisodes.length >= count) {
+                        break;
+                    }
+                    
+                    // 다음 페이지로 이동 시도
+                    hasMorePages = await this.#moveToNextPage(page, currentPage);
+                    if (hasMorePages) {
+                        currentPage++;
+                    }
+                } catch (error) {
+                    consecutiveFailures++;
+                    console.error(`페이지 ${currentPage} 처리 중 오류:`, error.message);
+                    
+                    if (consecutiveFailures >= maxFailures) {
+                        console.error(`연속 ${maxFailures}번 실패로 수집 중단`);
+                        break;
+                    }
+                    
+                    // 잠시 대기 후 재시도
+                    await page.waitForTimeout(2000);
+                }
+            }
+            
+            // 중복 제거 후 요청된 개수만큼 반환
+            const uniqueEpisodes = this.#removeDuplicateEpisodes(collectedEpisodes);
+            const result = uniqueEpisodes.slice(0, count);
+            
+            console.log(`최신 무료 회차 수집 완료: ${result.length}/${count}개`);
+            return result;
         } catch (error) {
             throw new Error(`최신 무료 회차 N개 추출 실패: ${error.message}`);
         }
@@ -309,16 +354,64 @@ export class NaverScraper extends ScrapingImplementor {
             if (!totalEpisodes) {
                 throw new Error('총 에피소드 수를 가져올 수 없습니다.');
             }
+            
             const previewButton = await page.$(this.#SELECTORS.PREVIEW_BUTTON);
             if (!previewButton) {
                 return [];
             }
+            
             await previewButton.click();
             await page.waitForSelector(this.#SELECTORS.EPISODE_LIST, { timeout: 5000 });
-            const paidEpisodes = await this.#extractPaidEpisodeInfo(page, totalEpisodes);
-            return paidEpisodes.slice(0, count);
+            
+            let collectedEpisodes = [];
+            let currentPage = 1;
+            let hasMorePages = true;
+            let consecutiveFailures = 0;
+            const maxFailures = 2;
+            
+            console.log(`최신 ${count}개 유료 회차 수집 시작`);
+            
+            while (hasMorePages && collectedEpisodes.length < count && consecutiveFailures < maxFailures) {
+                try {
+                    // 현재 페이지의 유료 에피소드 수집
+                    const pageEpisodes = await this.#extractPaidEpisodeInfo(page, totalEpisodes);
+                    collectedEpisodes = collectedEpisodes.concat(pageEpisodes);
+                    consecutiveFailures = 0; // 성공 시 실패 카운트 리셋
+                    
+                    console.log(`페이지 ${currentPage}: ${pageEpisodes.length}개 유료 에피소드 수집, 총 ${collectedEpisodes.length}개`);
+                    
+                    // 요청된 개수만큼 수집했으면 종료
+                    if (collectedEpisodes.length >= count) {
+                        break;
+                    }
+                    
+                    // 다음 페이지로 이동 시도
+                    hasMorePages = await this.#moveToNextPage(page, currentPage);
+                    if (hasMorePages) {
+                        currentPage++;
+                    }
+                } catch (error) {
+                    consecutiveFailures++;
+                    console.error(`페이지 ${currentPage} 처리 중 오류:`, error.message);
+                    
+                    if (consecutiveFailures >= maxFailures) {
+                        console.error(`연속 ${maxFailures}번 실패로 수집 중단`);
+                        break;
+                    }
+                    
+                    // 잠시 대기 후 재시도
+                    await page.waitForTimeout(2000);
+                }
+            }
+            
+            // 중복 제거 후 요청된 개수만큼 반환
+            const uniqueEpisodes = this.#removeDuplicateEpisodes(collectedEpisodes);
+            const result = uniqueEpisodes.slice(0, count);
+            
+            console.log(`최신 유료 회차 수집 완료: ${result.length}/${count}개`);
+            return result;
         } catch (error) {
-            throw new Error(`최신 미리보기 회차 N개 추출 실패: ${error.message}`);
+            throw new Error(`최신 유료 회차 N개 추출 실패: ${error.message}`);
         }
     }
 
@@ -328,18 +421,56 @@ export class NaverScraper extends ScrapingImplementor {
     async scrapFreeEpisodes(page) {
         try {
             await page.waitForSelector(this.#SELECTORS.EPISODE_LIST, { timeout: 10000 });
-            let episodes = [];
-            let hasNextPage = true;
+            
+            // 총 회차 수와 미리보기(유료) 회차 수를 가져와서 무료 회차 수 계산
+            const [totalEpisodes, previewCount] = await Promise.all([
+                this.scrapEpisodeCount(page),
+                this.scrapPreviewCount(page)
+            ]);
+            
+            const totalFreeEpisodes = totalEpisodes - previewCount;
+            let collectedEpisodes = [];
             let currentPage = 1;
-            while (hasNextPage) {
-                const pageEpisodes = await this.#extractFreeEpisodeInfo(page);
-                episodes = episodes.concat(pageEpisodes);
-                hasNextPage = await this.#moveToNextPage(page, currentPage);
-                if (hasNextPage) {
-                    currentPage++;
+            let hasMorePages = true;
+            let consecutiveFailures = 0;
+            const maxFailures = 3;
+            
+            console.log(`총 ${totalFreeEpisodes}개 무료 회차 수집 시작`);
+            
+            while (hasMorePages && collectedEpisodes.length < totalFreeEpisodes && consecutiveFailures < maxFailures) {
+                try {
+                    // 현재 페이지의 무료 에피소드 수집
+                    const pageEpisodes = await this.#extractFreeEpisodeInfo(page);
+                    collectedEpisodes = collectedEpisodes.concat(pageEpisodes);
+                    consecutiveFailures = 0; // 성공 시 실패 카운트 리셋
+                    
+                    console.log(`페이지 ${currentPage}: ${pageEpisodes.length}개 에피소드 수집, 총 ${collectedEpisodes.length}개`);
+                    
+                    // 다음 페이지로 이동 시도
+                    hasMorePages = await this.#moveToNextPage(page, currentPage);
+                    if (hasMorePages) {
+                        currentPage++;
+                    }
+                } catch (error) {
+                    consecutiveFailures++;
+                    console.error(`페이지 ${currentPage} 처리 중 오류:`, error.message);
+                    
+                    if (consecutiveFailures >= maxFailures) {
+                        console.error(`연속 ${maxFailures}번 실패로 수집 중단`);
+                        break;
+                    }
+                    
+                    // 잠시 대기 후 재시도
+                    await page.waitForTimeout(2000);
                 }
             }
-            return episodes;
+            
+            // 총 무료 회차 수만큼만 반환 (중복 제거 및 정렬)
+            const uniqueEpisodes = this.#removeDuplicateEpisodes(collectedEpisodes);
+            const result = uniqueEpisodes.slice(0, totalFreeEpisodes);
+            
+            console.log(`무료 회차 수집 완료: ${result.length}/${totalFreeEpisodes}개`);
+            return result;
         } catch (error) {
             throw new Error(`무료 회차 정보 추출 실패: ${error.message}`);
         }
@@ -613,20 +744,82 @@ export class NaverScraper extends ScrapingImplementor {
      * @private
      */
     async #moveToNextPage(page, currentPage) {
-        const nextPageButton = await page.$(this.#SELECTORS.EPISODE_NEXT_PAGE);
-        if (!nextPageButton) return false;
+        try {
+            // 현재 URL에서 titleId 추출
+            const currentUrl = page.url();
+            const urlObj = new URL(currentUrl);
+            const titleId = urlObj.searchParams.get('titleId');
+            
+            if (!titleId) return false;
 
-        const isDisabled = await page.evaluate(button => {
-            return button.classList.contains('disabled') || button.getAttribute('aria-disabled') === 'true';
-        }, nextPageButton);
-
-        if (!isDisabled) {
-            await page.goto(`${page.url().split('&page=')[0]}&page=${currentPage + 1}`);
-            await page.waitForSelector(this.#SELECTORS.EPISODE_LIST, { timeout: 10000 });
+            // 다음 페이지 URL 생성
+            const nextPageUrl = `https://comic.naver.com/webtoon/list?titleId=${titleId}&page=${currentPage + 1}&sort=DESC`;
+            
+            console.log(`페이지 ${currentPage + 1}로 이동 시도: ${nextPageUrl}`);
+            
+            // 페이지 이동 전에 잠시 대기
+            await page.waitForTimeout(1000);
+            
+            // 다음 페이지로 이동 (더 안전한 옵션 사용)
+            await page.goto(nextPageUrl, { 
+                waitUntil: 'domcontentloaded', 
+                timeout: 15000 
+            });
+            
+            // 페이지 로드 후 추가 대기
+            await page.waitForTimeout(2000);
+            
+            // 페이지 로드 확인
+            try {
+                await page.waitForSelector(this.#SELECTORS.EPISODE_LIST, { timeout: 10000 });
+            } catch (error) {
+                console.debug(`페이지 ${currentPage + 1}에서 에피소드 리스트를 찾을 수 없습니다.`);
+                return false;
+            }
+            
+            // 실제로 에피소드가 있는지 확인 (빈 페이지인지 체크)
+            const episodeItems = await page.$$(this.#SELECTORS.EPISODE_ITEM);
+            if (episodeItems.length === 0) {
+                console.debug(`페이지 ${currentPage + 1}에 에피소드가 없습니다.`);
+                return false;
+            }
+            
+            console.log(`페이지 ${currentPage + 1} 이동 성공, ${episodeItems.length}개 에피소드 발견`);
             return true;
+            
+        } catch (error) {
+            console.debug(`다음 페이지 이동 실패 (페이지 ${currentPage + 1}):`, error.message);
+            
+            // 페이지가 여전히 유효한지 확인
+            try {
+                await page.waitForTimeout(1000);
+                const currentUrl = page.url();
+                console.debug(`현재 페이지 URL: ${currentUrl}`);
+            } catch (navError) {
+                console.debug(`페이지 상태 확인 실패:`, navError.message);
+            }
+            
+            return false;
         }
+    }
 
-        return false;
+    /**
+     * 중복된 에피소드를 제거합니다.
+     * @param {Array} episodes - 에피소드 배열
+     * @returns {Array} 중복이 제거된 에피소드 배열
+     * @private
+     */
+    #removeDuplicateEpisodes(episodes) {
+        const seen = new Set();
+        return episodes.filter(episode => {
+            if (episode.episodeNumber && seen.has(episode.episodeNumber)) {
+                return false;
+            }
+            if (episode.episodeNumber) {
+                seen.add(episode.episodeNumber);
+            }
+            return true;
+        });
     }
 
     /**
