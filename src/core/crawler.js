@@ -29,7 +29,21 @@ export class Crawler {
                 isLandscape: true,
                 isMobile: false,
                 width: 1920,
-            }
+            },
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--disable-gpu',
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-renderer-backgrounding',
+                '--disable-features=TranslateUI',
+                '--disable-ipc-flooding-protection'
+            ]
         });
         try {
             const collector = this.collectors.get(body.eventType);

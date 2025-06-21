@@ -17,8 +17,21 @@ export class WebtoonContentCollector extends ContentCollector {
         const { id, url, platform, episodeCount } = data;
         const implementor = this.scraperFactory.getScraper(platform);
         const page = await browser.newPage();
+        const publishPage = await browser.newPage(); // 연재 시작일용 별도 페이지
+        
         try {
-            // 페이지 로드
+            // 1. 연재 시작일 수집 (별도 페이지에서)
+            let publishStartDate = null;
+            try {
+                await implementor.loadPage(publishPage, url);
+                publishStartDate = await implementor.scrapPublishStartDate(publishPage);
+            } catch (error) {
+                console.warn('연재 시작일 수집 실패:', error.message);
+            } finally {
+                await publishPage.close();
+            }
+            
+            // 2. 메인 페이지에서 모든 데이터 수집
             await implementor.loadPage(page, url);
             
             // 기본 정보 수집
@@ -59,11 +72,8 @@ export class WebtoonContentCollector extends ContentCollector {
                 implementor.scrapRelatedWebtoonIds(page)
             ]);
 
-            // 날짜 정보 수집
-            const [publishStartDate, lastUpdatedDate] = await Promise.all([
-                implementor.scrapPublishStartDate(page),
-                implementor.scrapLastUpdatedDate(page)
-            ]);
+            // 마지막 업데이트 날짜 수집
+            const lastUpdatedDate = await implementor.scrapLastUpdatedDate(page);
 
             const episodes = [...freeEpisodes, ...paidEpisodes];
 

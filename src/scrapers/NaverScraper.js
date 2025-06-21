@@ -58,16 +58,18 @@ export class NaverScraper extends ScrapingImplementor {
     async loadPage(page, url) {
         try {
             await page.goto(url, {
-                waitUntil: 'networkidle2',
-                timeout: 30000
+                waitUntil: 'domcontentloaded',
+                timeout: this.getTimeout('PAGE_LOAD')
             });
 
+            // 병렬로 여러 요소 대기 (타임아웃 단축)
             await Promise.all([
-                page.waitForSelector(this.#SELECTORS.TITLE, { timeout: 10000 }),
-                page.waitForSelector(this.#SELECTORS.EPISODE_ITEM, { timeout: 10000 }),
-                page.waitForSelector(this.#SELECTORS.DESCRIPTION, { timeout: 10000 })
+                page.waitForSelector(this.#SELECTORS.TITLE, { timeout: this.getTimeout('SELECTOR_WAIT') }),
+                page.waitForSelector(this.#SELECTORS.EPISODE_ITEM, { timeout: this.getTimeout('SELECTOR_WAIT') }),
+                page.waitForSelector(this.#SELECTORS.DESCRIPTION, { timeout: this.getTimeout('SELECTOR_WAIT') })
             ]);
 
+            // 동적 컨텐츠 로드 시간 단축
             await this.#loadDynamicContent(page);
         } catch (error) {
             throw new Error(`페이지 로드 실패: ${error.message}`);
@@ -250,7 +252,7 @@ export class NaverScraper extends ScrapingImplementor {
     async scrapAuthors(page) {
         try {
             const authors = [];
-            await page.waitForSelector(this.#SELECTORS.META_INFO, { timeout: 5000 });
+            await page.waitForSelector(this.#SELECTORS.META_INFO, { timeout: this.getTimeout('SELECTOR_WAIT') });
             const authorContainers = await page.$$(this.#SELECTORS.META_INFO);
 
             for (const container of authorContainers) {
@@ -291,7 +293,7 @@ export class NaverScraper extends ScrapingImplementor {
      */
     async scrapLatestFreeEpisodes(page, count = 1) {
         try {
-            await page.waitForSelector(this.#SELECTORS.EPISODE_LIST, { timeout: 10000 });
+            await page.waitForSelector(this.#SELECTORS.EPISODE_LIST, { timeout: this.getTimeout('NAVIGATION_WAIT') });
             
             let collectedEpisodes = [];
             let currentPage = 1;
@@ -329,8 +331,8 @@ export class NaverScraper extends ScrapingImplementor {
                         break;
                     }
                     
-                    // 잠시 대기 후 재시도
-                    await page.waitForTimeout(2000);
+                    // 잠시 대기 후 재시도 (2000ms → 500ms)
+                    await page.waitForTimeout(this.getTimeout('ERROR_RECOVERY'));
                 }
             }
             
@@ -361,7 +363,7 @@ export class NaverScraper extends ScrapingImplementor {
             }
             
             await previewButton.click();
-            await page.waitForSelector(this.#SELECTORS.EPISODE_LIST, { timeout: 5000 });
+            await page.waitForSelector(this.#SELECTORS.EPISODE_LIST, { timeout: this.getTimeout('NAVIGATION_WAIT') });
             
             let collectedEpisodes = [];
             let currentPage = 1;
@@ -399,8 +401,8 @@ export class NaverScraper extends ScrapingImplementor {
                         break;
                     }
                     
-                    // 잠시 대기 후 재시도
-                    await page.waitForTimeout(2000);
+                    // 잠시 대기 후 재시도 (2000ms → 500ms)
+                    await page.waitForTimeout(this.getTimeout('ERROR_RECOVERY'));
                 }
             }
             
@@ -420,7 +422,7 @@ export class NaverScraper extends ScrapingImplementor {
      */
     async scrapFreeEpisodes(page) {
         try {
-            await page.waitForSelector(this.#SELECTORS.EPISODE_LIST, { timeout: 10000 });
+            await page.waitForSelector(this.#SELECTORS.EPISODE_LIST, { timeout: this.getTimeout('NAVIGATION_WAIT') });
             
             // 총 회차 수와 미리보기(유료) 회차 수를 가져와서 무료 회차 수 계산
             const [totalEpisodes, previewCount] = await Promise.all([
@@ -460,8 +462,8 @@ export class NaverScraper extends ScrapingImplementor {
                         break;
                     }
                     
-                    // 잠시 대기 후 재시도
-                    await page.waitForTimeout(2000);
+                    // 잠시 대기 후 재시도 (2000ms → 500ms)
+                    await page.waitForTimeout(this.getTimeout('ERROR_RECOVERY'));
                 }
             }
             
@@ -490,7 +492,7 @@ export class NaverScraper extends ScrapingImplementor {
                 return [];
             }
             await previewButton.click();
-            await page.waitForSelector(this.#SELECTORS.EPISODE_LIST, { timeout: 5000 });
+            await page.waitForSelector(this.#SELECTORS.EPISODE_LIST, { timeout: this.getTimeout('NAVIGATION_WAIT') });
             return await this.#extractPaidEpisodeInfo(page, totalEpisodes);
         } catch (error) {
             throw new Error(`유료 회차 정보 추출 실패: ${error.message}`);
@@ -502,7 +504,7 @@ export class NaverScraper extends ScrapingImplementor {
      */
     async scrapPreviewCount(page) {
         try {
-            await page.waitForSelector(this.#SELECTORS.PREVIEW_AREA, { timeout: 10000 });
+            await page.waitForSelector(this.#SELECTORS.PREVIEW_AREA, { timeout: this.getTimeout('NAVIGATION_WAIT') });
             const previewCount = await page.evaluate(() => {
                 const element = document.querySelector('.EpisodeListPreview__text_area--WMXZz strong');
                 if (!element) return 0;
@@ -539,7 +541,7 @@ export class NaverScraper extends ScrapingImplementor {
      */
     async scrapLastUpdatedDate(page) {
         try {
-            await page.waitForSelector(this.#SELECTORS.EPISODE_ITEM, { timeout: 10000 });
+            await page.waitForSelector(this.#SELECTORS.EPISODE_ITEM, { timeout: this.getTimeout('NAVIGATION_WAIT') });
             const firstItem = await page.$(this.#SELECTORS.EPISODE_ITEM);
             if (!firstItem) {
                 return null;
@@ -565,38 +567,64 @@ export class NaverScraper extends ScrapingImplementor {
     /**
      * 웹툰의 연재 시작 날짜를 추출합니다.
      * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
-     * @returns {Promise<string>} 연재 시작 날짜 (YYYY-MM-DD 형식)
+     * @returns {Promise<string|null>} 연재 시작 날짜 (YYYY-MM-DD 형식)
      * @throws {Error} 연재 시작 날짜 추출 실패 시 에러
      */
     async scrapPublishStartDate(page) {
         try {
-
-            return null;
+            // 현재 URL에서 titleId 추출
+            const currentUrl = page.url();
+            const urlObj = new URL(currentUrl);
+            const titleId = urlObj.searchParams.get('titleId');
             
-            const currentUrl = await page.url();
-            const currentTitleId = await this.scrapUniqueId(page);
-
-            // 첫 화 페이지로 이동
-            await this.loadPage(page, currentTitleId);
-            await page.goto(`${currentUrl}&page=1&sort=ASC`);
-            await page.waitForSelector(this.#SELECTORS.EPISODE_ITEM, { timeout: 10000 });
-
-            const firstItem = await page.$(this.#SELECTORS.EPISODE_ITEM);
-            if (!firstItem) {
-                throw new Error('첫 화 정보를 찾을 수 없습니다.');
+            if (!titleId) {
+                console.debug('titleId를 찾을 수 없습니다.');
+                return null;
             }
 
+            // 첫 화 페이지 URL 생성 (ASC 정렬로 첫 번째 에피소드)
+            const firstPageUrl = `https://comic.naver.com/webtoon/list?titleId=${titleId}&page=1&sort=ASC`;
+            
+            console.log(`연재 시작일 수집을 위해 첫 화 페이지로 이동: ${firstPageUrl}`);
+            
+            // 첫 화 페이지로 이동
+            await page.goto(firstPageUrl, { 
+                waitUntil: 'domcontentloaded', 
+                timeout: this.getTimeout('NAVIGATION_WAIT') 
+            });
+            
+            // 페이지 로드 대기
+            await page.waitForSelector(this.#SELECTORS.EPISODE_ITEM, { timeout: this.getTimeout('SELECTOR_WAIT') });
+            
+            // 첫 번째 에피소드 찾기
+            const firstItem = await page.$(this.#SELECTORS.EPISODE_ITEM);
+            if (!firstItem) {
+                console.debug('첫 화 정보를 찾을 수 없습니다.');
+                return null;
+            }
+
+            // 첫 번째 에피소드의 날짜 추출
             const dateText = await firstItem.$eval(this.#SELECTORS.EPISODE_DATE, el => el.textContent.trim());
-            const formattedDate = this.#formatDate(dateText);
+            if (!dateText) {
+                console.debug('첫 화 날짜 정보를 찾을 수 없습니다.');
+                return null;
+            }
 
-            // 원래 페이지로 복귀
-            await this.loadPage(page, currentTitleId);
-            await page.goto(currentUrl);
-            await page.waitForSelector(this.#SELECTORS.EPISODE_ITEM, { timeout: 10000 });
+            // YY.MM.DD 형식의 날짜만 처리
+            const dateMatch = dateText.match(/\d{2}\.\d{2}\.\d{2}/);
+            if (!dateMatch) {
+                console.debug(`날짜 형식이 올바르지 않습니다: ${dateText}`);
+                return null;
+            }
 
+            const formattedDate = this.#formatDate(dateMatch[0]);
+            console.log(`연재 시작일 추출 완료: ${formattedDate}`);
+            
             return formattedDate;
+            
         } catch (error) {
-            throw new Error(`연재 시작 날짜 추출 실패: ${error.message}`);
+            console.error(`연재 시작 날짜 추출 실패: ${error.message}`);
+            return null;
         }
     }
 
@@ -615,10 +643,10 @@ export class NaverScraper extends ScrapingImplementor {
      * @private
      */
     async #loadDynamicContent(page) {
-        await page.evaluate(() => {
+        await page.evaluate((timeout) => {
             window.scrollBy(0, 500);
-            return new Promise(resolve => setTimeout(resolve, 1000));
-        });
+            return new Promise(resolve => setTimeout(resolve, timeout));
+        }, this.getTimeout('DYNAMIC_CONTENT'));
     }
 
     /**
@@ -757,21 +785,21 @@ export class NaverScraper extends ScrapingImplementor {
             
             console.log(`페이지 ${currentPage + 1}로 이동 시도: ${nextPageUrl}`);
             
-            // 페이지 이동 전에 잠시 대기
-            await page.waitForTimeout(1000);
+            // 페이지 이동 전에 짧은 대기 (1000ms → 300ms)
+            await page.waitForTimeout(this.getTimeout('BEFORE_NAVIGATION'));
             
-            // 다음 페이지로 이동 (더 안전한 옵션 사용)
+            // 다음 페이지로 이동 (더 빠른 옵션 사용)
             await page.goto(nextPageUrl, { 
                 waitUntil: 'domcontentloaded', 
-                timeout: 15000 
+                timeout: this.getTimeout('NAVIGATION_WAIT') 
             });
             
-            // 페이지 로드 후 추가 대기
-            await page.waitForTimeout(2000);
+            // 페이지 로드 후 짧은 대기 (2000ms → 500ms)
+            await page.waitForTimeout(this.getTimeout('AFTER_NAVIGATION'));
             
             // 페이지 로드 확인
             try {
-                await page.waitForSelector(this.#SELECTORS.EPISODE_LIST, { timeout: 10000 });
+                await page.waitForSelector(this.#SELECTORS.EPISODE_LIST, { timeout: this.getTimeout('SELECTOR_WAIT') });
             } catch (error) {
                 console.debug(`페이지 ${currentPage + 1}에서 에피소드 리스트를 찾을 수 없습니다.`);
                 return false;
@@ -792,7 +820,7 @@ export class NaverScraper extends ScrapingImplementor {
             
             // 페이지가 여전히 유효한지 확인
             try {
-                await page.waitForTimeout(1000);
+                await page.waitForTimeout(this.getTimeout('ERROR_RECOVERY'));
                 const currentUrl = page.url();
                 console.debug(`현재 페이지 URL: ${currentUrl}`);
             } catch (navError) {
@@ -855,7 +883,7 @@ export class NaverScraper extends ScrapingImplementor {
      */
     async scrapRelatedNovels(page) {
         try {
-            await page.waitForSelector(this.#SELECTORS.PRODUCT_LIST, { timeout: 5000 });
+            await page.waitForSelector(this.#SELECTORS.PRODUCT_LIST, { timeout: this.getTimeout('SELECTOR_WAIT') });
 
             return await page.evaluate(
                 (selectors) => {
@@ -927,7 +955,7 @@ export class NaverScraper extends ScrapingImplementor {
      */
     async scrapRelatedWebtoonIds(page) {
         try {
-            await page.waitForSelector(this.#SELECTORS.RELATED_WEBTOONS, { timeout: 5000 });
+            await page.waitForSelector(this.#SELECTORS.RELATED_WEBTOONS, { timeout: this.getTimeout('SELECTOR_WAIT') });
 
             return await page.evaluate((selectors) => {
                 const relatedWebtoons = document.querySelectorAll(selectors.RELATED_WEBTOON_ITEM);

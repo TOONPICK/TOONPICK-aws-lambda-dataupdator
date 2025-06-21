@@ -4,6 +4,56 @@
  * @interface
  */
 export class ScrapingImplementor {
+    // 기본 성능 설정 (밀리초 단위)
+    #TIMEOUT_CONFIG = {
+        PAGE_LOAD: 10000,           // 페이지 로드 타임아웃
+        SELECTOR_WAIT: 5000,        // 셀렉터 대기 타임아웃
+        NAVIGATION_WAIT: 10000,     // 페이지 이동 타임아웃
+        BEFORE_NAVIGATION: 300,     // 페이지 이동 전 대기
+        AFTER_NAVIGATION: 500,      // 페이지 이동 후 대기
+        ERROR_RECOVERY: 500,        // 에러 복구 대기
+        DYNAMIC_CONTENT: 300,       // 동적 컨텐츠 로드 대기
+        SCROLL_WAIT: 300            // 스크롤 후 대기
+    };
+
+    /**
+     * 타임아웃 설정을 업데이트합니다.
+     * @param {Object} config - 업데이트할 설정 객체
+     */
+    updateTimeoutConfig(config) {
+        this.#TIMEOUT_CONFIG = { ...this.#TIMEOUT_CONFIG, ...config };
+    }
+
+    /**
+     * 현재 타임아웃 설정을 반환합니다.
+     * @returns {Object} 현재 타임아웃 설정
+     */
+    getTimeoutConfig() {
+        return { ...this.#TIMEOUT_CONFIG };
+    }
+
+    /**
+     * 특정 타임아웃 값을 설정합니다.
+     * @param {string} key - 설정 키
+     * @param {number} value - 설정 값 (밀리초)
+     */
+    setTimeout(key, value) {
+        if (this.#TIMEOUT_CONFIG.hasOwnProperty(key)) {
+            this.#TIMEOUT_CONFIG[key] = value;
+        } else {
+            console.warn(`알 수 없는 타임아웃 설정: ${key}`);
+        }
+    }
+
+    /**
+     * 타임아웃 설정 값을 가져옵니다.
+     * @param {string} key - 설정 키
+     * @returns {number} 설정 값
+     */
+    getTimeout(key) {
+        return this.#TIMEOUT_CONFIG[key] || 5000; // 기본값 5초
+    }
+
     /**
      * 웹툰 페이지를 로드하고 필요한 요소들이 로드될 때까지 대기합니다.
      * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
