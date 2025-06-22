@@ -18,7 +18,14 @@ export class LambdaBrowser extends BrowserType {
                 '--disable-features=IsolateOrigins,site-per-process',
                 '--disable-site-isolation-trials'
             ],
-            defaultViewport: config.defaultViewport,
+            defaultViewport: {
+                deviceScaleFactor: 1,
+                hasTouch: false,
+                height: 1080,
+                isLandscape: true,
+                isMobile: false,
+                width: 1920,
+            },
             executablePath: await chromium.executablePath(),
             headless: "shell",
             ignoreHTTPSErrors: true,

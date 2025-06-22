@@ -21,30 +21,7 @@ export class Crawler {
      * @returns {Promise<Object>} 크롤링 결과
      */
     async execute(body) {
-        const browser = await this.browserType.launch({
-            defaultViewport: {
-                deviceScaleFactor: 1,
-                hasTouch: false,
-                height: 1080,
-                isLandscape: true,
-                isMobile: false,
-                width: 1920,
-            },
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote',
-                '--disable-gpu',
-                '--disable-background-timer-throttling',
-                '--disable-backgrounding-occluded-windows',
-                '--disable-renderer-backgrounding',
-                '--disable-features=TranslateUI',
-                '--disable-ipc-flooding-protection'
-            ]
-        });
+        const browser = await this.browserType.launch();
         try {
             const collector = this.collectors.get(body.eventType);
             if (!collector) {
