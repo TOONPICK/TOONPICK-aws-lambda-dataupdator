@@ -177,15 +177,11 @@ export function addResponseEventType(scrapedData, requestEventType) {
     switch (requestEventType) {
         case 'WEBTOON_CONTENT':
             // 전체 웹툰 정보를 수집한 경우
-            responseEventType = 'CRAWL_WEBTOON_ALL';
+            responseEventType = 'CRAWL_WEBTOON_NEW';
             break;
         case 'WEBTOON_UPDATE':
             // 업데이트 정보를 수집한 경우
-            if (scrapedData.episodes && scrapedData.episodes.length > 0) {
-                responseEventType = 'CRAWL_WEBTOON_EPISODE';
-            } else {
-                responseEventType = 'CRAWL_WEBTOON_EPISODE'; // 업데이트가 없어도 에피소드 타입
-            }
+            responseEventType = 'CRAWL_WEBTOON_EPISODE';
             break;
         default:
             responseEventType = 'CRAWL_WEBTOON_EPISODE';
