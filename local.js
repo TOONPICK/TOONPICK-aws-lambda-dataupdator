@@ -44,10 +44,13 @@ async function main() {
         const results = await crawler.execute(JSON.parse(testEvent.Records[0].body));
         if (Array.isArray(results)) {
             results.forEach((result, idx) => {
-                console.log(`크롤링 결과 [${idx}]:`, JSON.parse(result.body));
+                console.log(`크롤링 결과 [${idx}]:`);
+                console.log(JSON.stringify(result, null, 2));
+                console.log('---');
             });
         } else {
-            console.log('크롤링 결과:', JSON.parse(results.body));
+            console.log('크롤링 결과:');
+            console.log(JSON.stringify(results, null, 2));
         }
     } catch (error) {
         console.error('크롤링 실패:', error);

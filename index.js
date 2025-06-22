@@ -1,7 +1,7 @@
 import { Crawler } from './src/core/crawler.js';
 import { LambdaBrowser } from './src/browsers/lambdaBrowser.js';
 import { parseCrawlRequest, createSQSResponseMessage } from './src/types/sqs.js';
-import { formatWebtoonData } from './src/types/webtoon.js';
+import { formatWebtoonData, addResponseEventType } from './src/types/webtoon.js';
 import { loadEnv } from './src/env/index.js';
 import { SSMCoreClient, SQSCoreClient } from './src/aws/index.js';
 import { SlackCoreClient } from './src/notification/index.js';
@@ -12,7 +12,7 @@ const sqsMessageFormatter = (payload, type, options) => {
     if (type === 'error') {
         return createSQSResponseMessage(
             requestId,
-            context.eventType || 'CRAWL_WEBTOON_EPISODE',
+            'FAIL',
             {
                 error: {
                     message: payload.message,
@@ -25,23 +25,34 @@ const sqsMessageFormatter = (payload, type, options) => {
         );
     }
     
-    // 성공 응답의 경우 payload가 이미 적절한 형식이어야 함
+    // 성공 응답의 경우 payload는 crawler.js에서 반환한 결과
     // payload가 배열이면 각 항목을 개별 메시지로 처리
     if (Array.isArray(payload)) {
-        return payload.map(result => 
-            createSQSResponseMessage(
+        return payload.map(result => {
+            const dataWithEventType = result.success && result.data ? 
+                addResponseEventType(result.data, context.eventType) : result.data;
+            const formattedData = result.success && dataWithEventType ? 
+                formatWebtoonData(dataWithEventType, context.eventType) : dataWithEventType;
+            
+            return createSQSResponseMessage(
                 requestId,
-                context.eventType || 'CRAWL_WEBTOON_EPISODE',
-                result.data || result,
+                dataWithEventType.responseEventType || 'CRAWL_WEBTOON_EPISODE',
+                formattedData,
                 '크롤링이 성공적으로 완료되었습니다.'
-            )
-        );
+            );
+        });
     }
+    
+    // 단일 결과인 경우
+    const dataWithEventType = payload.success && payload.data ? 
+        addResponseEventType(payload.data, context.eventType) : payload.data;
+    const formattedData = payload.success && dataWithEventType ? 
+        formatWebtoonData(dataWithEventType, context.eventType) : dataWithEventType;
     
     return createSQSResponseMessage(
         requestId,
-        context.eventType || 'CRAWL_WEBTOON_EPISODE',
-        payload.data || payload,
+        dataWithEventType.responseEventType || 'CRAWL_WEBTOON_EPISODE',
+        formattedData,
         '크롤링이 성공적으로 완료되었습니다.'
     );
 };
@@ -123,21 +134,11 @@ export async function handler(event) {
         const crawler = new Crawler(browserType);
         const results = await crawler.execute(request);
         
-        // 크롤링 결과를 Java에서 기대하는 형식으로 포맷팅
-        const formattedResults = results.map(result => {
-            if (result.success && result.data) {
-                return {
-                    ...result,
-                    data: formatWebtoonData(result.data, request.eventType)
-                };
-            }
-            return result;
-        });
-        
         const processingTime = Date.now() - startTime;
         const context = {
             platform: request.data?.platform || 'Unknown',
             type: request.data?.type || 'Unknown',
+            eventType: request.eventType,
             processingTime
         };
         // SQS/Slack 알림 (각 결과별로)
@@ -145,18 +146,15 @@ export async function handler(event) {
         let failCount = 0;
         let sqsMessageIds = [];
         
-        // SQS 메시지 포맷터가 배열을 반환할 수 있으므로 이를 처리
-        const formattedMessages = sqsMessageFormatter(formattedResults, 'success', { requestId, context });
-        const messagesToSend = Array.isArray(formattedMessages) ? formattedMessages : [formattedMessages];
-        
-        for (const message of messagesToSend) {
+        // 각 결과를 개별적으로 SQS로 전송
+        for (const result of results) {
             try {
-                const sqsResult = await sqsClient.send(message, { requestId, type: 'result' });
+                const sqsResult = await sqsClient.send(result, { requestId, type: 'result' });
                 sqsMessageIds.push(sqsResult.MessageId);
                 successCount++;
                 
                 try {
-                    await slackClient.send(message, 'success', { requestId, context });
+                    await slackClient.send(result, 'success', { requestId, context });
                 } catch (slackError) {
                     console.warn('Slack 알림 전송 실패:', slackError.message);
                 }
@@ -174,7 +172,7 @@ export async function handler(event) {
                 sqsMessageIds,
                 successCount,
                 failCount,
-                results: formattedResults
+                results: results
             })
         };
     } catch (error) {
@@ -182,8 +180,8 @@ export async function handler(event) {
         const context = {
             platform: request?.data?.platform || 'Unknown',
             type: request?.data?.type || 'Unknown',
-            processingTime,
-            eventType: request?.eventType || 'CRAWL_WEBTOON_EPISODE'
+            eventType: request?.eventType || 'CRAWL_WEBTOON_EPISODE',
+            processingTime
         };
         console.error(`크롤링 실패: ${requestId}`, {
             error: error.message,
@@ -191,8 +189,7 @@ export async function handler(event) {
             processingTime
         });
         try {
-            const errorMessage = sqsMessageFormatter(error, 'error', { requestId, context });
-            await sqsClient.send(errorMessage, { requestId, type: 'error' });
+            await sqsClient.send(error, { requestId, type: 'error' });
             try {
                 await slackClient.send(error, 'error', { requestId, context });
             } catch (slackError) {

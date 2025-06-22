@@ -873,13 +873,7 @@ export class NaverScraper extends ScrapingImplementor {
     /**
      * 웹툰의 관련 웹소설 정보를 스크래핑합니다.
      * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
-     * @returns {Promise<Array<{
-     *   title: string,
-     *   link: string,
-     *   thumbnailUrl: string,
-     *   type: 'ORIGINAL' | 'BOOK',
-     *   freeEpisodeCount?: number
-     * }>>} 관련 웹소설 정보 목록
+     * @returns {Promise<import('../types/webtoon.js').Novel[]>} 관련 웹소설 정보 목록
      */
     async scrapRelatedNovels(page) {
         try {

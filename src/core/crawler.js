@@ -35,19 +35,15 @@ export class Crawler {
                     const result = await collector.execute(browser, dataItem);
                     results.push({
                         statusCode: result.statusCode,
-                        body: JSON.stringify({
-                            requestId: body.requestId,
-                            ...result.data
-                        }),
+                        data: result.data,
                         success: true
                     });
                 } catch (error) {
                     results.push({
                         statusCode: 500,
-                        body: JSON.stringify({
-                            requestId: body.requestId,
+                        data: {
                             error: error.message
-                        }),
+                        },
                         success: false,
                         error: error.message
                     });
@@ -58,10 +54,9 @@ export class Crawler {
             console.error('크롤링 실패:', error);
             return [{
                 statusCode: 500,
-                body: JSON.stringify({
-                    requestId: body.requestId,
+                data: {
                     error: error.message
-                }),
+                },
                 success: false,
                 error: error.message
             }];
