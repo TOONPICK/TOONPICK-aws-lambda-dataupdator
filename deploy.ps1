@@ -20,7 +20,6 @@ New-Item -ItemType Directory -Force -Path $DIST_DIR/src/browsers | Out-Null
 New-Item -ItemType Directory -Force -Path $DIST_DIR/src/config | Out-Null
 New-Item -ItemType Directory -Force -Path $DIST_DIR/src/core | Out-Null
 New-Item -ItemType Directory -Force -Path $DIST_DIR/src/scrapers | Out-Null
-New-Item -ItemType Directory -Force -Path $DIST_DIR/src/scrapers/platforms | Out-Null
 New-Item -ItemType Directory -Force -Path $DIST_DIR/src/types | Out-Null
 New-Item -ItemType Directory -Force -Path $DIST_DIR/src/utils | Out-Null
 New-Item -ItemType Directory -Force -Path $DIST_DIR/src/collectors | Out-Null
@@ -53,15 +52,13 @@ Copy-Item -Path index.js -Destination $DIST_DIR
 Copy-Item -Path src/browsers/* -Destination $DIST_DIR/src/browsers
 Copy-Item -Path src/config/* -Destination $DIST_DIR/src/config
 Copy-Item -Path src/core/* -Destination $DIST_DIR/src/core
-Copy-Item -Path src/scrapper/*.js -Destination $DIST_DIR/src/scrapper
-Copy-Item -Path src/scrapper/platforms/* -Destination $DIST_DIR/src/scrapper/platforms
+Copy-Item -Path src/scrapers/*.js -Destination $DIST_DIR/src/scrapers
 Copy-Item -Path src/types/* -Destination $DIST_DIR/src/types
 Copy-Item -Path src/utils/* -Destination $DIST_DIR/src/utils
 Copy-Item -Recurse -Path src/env -Destination $DIST_DIR/src
 Copy-Item -Recurse -Path src/aws -Destination $DIST_DIR/src
 Copy-Item -Recurse -Path src/notification -Destination $DIST_DIR/src
 Copy-Item -Path src/collectors/* -Destination $DIST_DIR/src/collectors
-Copy-Item -Path src/scrapers/* -Destination $DIST_DIR/src/scrapers
 
 # ZIP 파일 생성 (node_modules 제외)
 Write-Host "Lambda 배포 패키지 생성 중..." -ForegroundColor Yellow
