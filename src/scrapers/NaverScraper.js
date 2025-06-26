@@ -1135,7 +1135,7 @@ export class NaverScraper extends ScrapingImplementor {
     /**
      * 신작 웹툰 리스트를 수집한다.
      * @param {import('puppeteer-core').Browser} browser - Puppeteer 브라우저 인스턴스
-     * @returns {Promise<Array<{id: string, url: string, platform: string, title: string}>>} 신작 웹툰 리스트
+     * @returns {Promise<import('../types/webtoon.js').NewWebtoonInfo[]>} 신작 웹툰 리스트
      */
     async scrapNewWebtoonList(browser) {
         const NAVER_NEW_WEBTOON_URL = 'https://comic.naver.com/webtoon?tab=new';

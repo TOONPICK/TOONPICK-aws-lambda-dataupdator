@@ -1,5 +1,6 @@
 import { WebtoonContentCollector } from '../collectors/webtoonContentCollector.js';
 import { WebtoonUpdateCollector } from '../collectors/webtoonUpdateCollector.js';
+import { NewWebtoonCollector } from '../collectors/newWebtoonCollector.js';
 import { ScraperFactory } from '../scrapers/scraperFactory.js';
 
 export class Crawler {
@@ -11,7 +12,8 @@ export class Crawler {
         this.scraperFactory = new ScraperFactory();
         this.collectors = new Map([
             ['WEBTOON_CONTENT', new WebtoonContentCollector(this.scraperFactory)],
-            ['WEBTOON_UPDATE', new WebtoonUpdateCollector(this.scraperFactory)]
+            ['WEBTOON_UPDATE', new WebtoonUpdateCollector(this.scraperFactory)],
+            ['NEW_WEBTOON', new NewWebtoonCollector(this.scraperFactory)]
         ]);
     }
 

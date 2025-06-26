@@ -124,6 +124,14 @@
  */
 
 /**
+ * @typedef {Object} NewWebtoonInfo
+ * @property {string} id - 웹툰 ID
+ * @property {string} url - 웹툰 URL
+ * @property {import('./webtoon.js').WebtoonPlatform} platform - 웹툰 플랫폼
+ * @property {string} title - 웹툰 제목
+ */
+
+/**
  * 웹툰 데이터를 Java에서 기대하는 형식으로 변환합니다.
  * @param {Object} rawData - 크롤링된 원본 데이터 (WebtoonScrapResult)
  * @param {string} eventType - 이벤트 타입
