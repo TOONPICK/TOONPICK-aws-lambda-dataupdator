@@ -60,7 +60,6 @@
  * @property {number} previewCount - 미리보기 수
  * @property {string[]} genres - 장르 목록
  * @property {WebtoonAuthor[]} authors - 작가 정보
- * @property {WebtoonEpisode[]} latestFreeEpisode - 최신 무료 회차 정보
  * @property {string} publishStartDate - 연재 시작일 (ISO 형식)
  * @property {string} lastUpdatedDate - 마지막 업데이트일 (ISO 형식)
  * @property {WebtoonEpisode[]} episodes - 에피소드 회차 정보
@@ -84,7 +83,6 @@
  * @property {number} previewCount - 미리보기 수
  * @property {string[]} genres - 장르 목록
  * @property {WebtoonAuthor[]} authors - 작가 정보
- * @property {WebtoonEpisode[]} latestFreeEpisode - 최신 무료 회차 정보
  * @property {string} publishStartDate - 연재 시작일 (ISO 형식)
  * @property {string} lastUpdatedDate - 마지막 업데이트일 (ISO 형식)
  * @property {WebtoonEpisode[]} episodes - 에피소드 회차 정보
@@ -108,7 +106,6 @@
  * @property {number} previewCount - 미리보기 수
  * @property {string[]} genres - 장르 목록
  * @property {WebtoonAuthor[]} authors - 작가 정보
- * @property {WebtoonEpisode[]} latestFreeEpisode - 최신 무료 회차 정보
  * @property {string} publishStartDate - 연재 시작일 (ISO 형식)
  * @property {string} lastUpdatedDate - 마지막 업데이트일 (ISO 형식)
  * @property {WebtoonEpisode[]} episodes - 에피소드 회차 정보
@@ -141,22 +138,22 @@ export function formatWebtoonData(rawData, eventType) {
     // WebtoonScrapResult를 Java에서 기대하는 형식으로 변환
     const formattedData = {
         id: rawData.id || rawData.uniqueId || `webtoon_${Date.now()}`,
-        url: rawData.url,
+        url: rawData.url || '',
         title: rawData.title || 'Unknown Title',
         uniqueId: rawData.uniqueId || rawData.id || `webtoon_${Date.now()}`,
         platform: rawData.platform || 'NAVER',
-        description: rawData.description,
-        thumbnailUrl: rawData.thumbnailUrl,
-        dayOfWeek: rawData.dayOfWeek,
+        description: rawData.description || '',
+        thumbnailUrl: rawData.thumbnailUrl || '',
+        dayOfWeek: rawData.dayOfWeek || '',
         status: rawData.status || 'ONGOING',
         ageRating: rawData.ageRating || 'ALL',
         episodeCount: rawData.episodeCount || 0,
         previewCount: rawData.previewCount || 0,
         genres: rawData.genres || [],
         authors: rawData.authors || [],
-        latestFreeEpisode: rawData.latestFreeEpisode,
-        publishStartDate: rawData.publishStartDate,
-        lastUpdatedDate: rawData.lastUpdatedDate,
+        latestFreeEpisode: rawData.latestFreeEpisode || [],
+        publishStartDate: rawData.publishStartDate || '',
+        lastUpdatedDate: rawData.lastUpdatedDate || '',
         episodes: rawData.episodes || [],
         relatedNovels: rawData.relatedNovels || [],
         relatedWebtoonIds: rawData.relatedWebtoonIds || []
@@ -174,6 +171,11 @@ export function formatWebtoonData(rawData, eventType) {
 export function addResponseEventType(scrapedData, requestEventType) {
     let responseEventType;
     
+    console.log(`addResponseEventType 호출:`, {
+        requestEventType,
+        scrapedDataKeys: Object.keys(scrapedData || {})
+    });
+    
     switch (requestEventType) {
         case 'WEBTOON_CONTENT':
             // 전체 웹툰 정보를 수집한 경우
@@ -186,6 +188,11 @@ export function addResponseEventType(scrapedData, requestEventType) {
         default:
             responseEventType = 'CRAWL_WEBTOON_EPISODE';
     }
+    
+    console.log(`매핑 결과:`, {
+        requestEventType,
+        responseEventType
+    });
     
     return {
         ...scrapedData,

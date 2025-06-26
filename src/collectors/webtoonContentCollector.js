@@ -57,9 +57,6 @@ export class WebtoonContentCollector extends ContentCollector {
                 implementor.scrapAuthors(page)
             ]);
             
-            // 최신 무료 회차 정보 수집
-            const latestFreeEpisode = await implementor.scrapLatestFreeEpisodes(page);
-
             // 모든 회차 정보 수집
             const [freeEpisodes, paidEpisodes] = await Promise.all([
                 implementor.scrapFreeEpisodes(page),
@@ -80,7 +77,8 @@ export class WebtoonContentCollector extends ContentCollector {
             return {
                 statusCode: 200,
                 data: {
-                    id,
+                    id: 0,
+                    externalId: id,
                     url,
                     title,
                     uniqueId,
@@ -94,7 +92,6 @@ export class WebtoonContentCollector extends ContentCollector {
                     previewCount,
                     genres,
                     authors,
-                    latestFreeEpisode,
                     publishStartDate,
                     lastUpdatedDate,
                     episodes,   

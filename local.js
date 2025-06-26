@@ -12,18 +12,6 @@ async function main() {
                     eventType: 'WEBTOON_CONTENT',
                     data: [
                         {
-                            id: 747269,
-                            url: 'https://comic.naver.com/webtoon/list?titleId=747269',
-                            platform: 'NAVER',
-                            episodeCount: 267
-                        },
-                        {
-                            id: 821597,
-                            url: 'https://comic.naver.com/webtoon/list?titleId=821597',
-                            platform: 'NAVER',
-                            episodeCount: 77
-                        },
-                        {
                             id: 832557,
                             url: 'https://comic.naver.com/webtoon/list?titleId=832557',
                             platform: 'NAVER',
