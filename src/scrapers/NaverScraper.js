@@ -873,10 +873,12 @@ export class NaverScraper extends ScrapingImplementor {
     /**
      * 웹툰의 관련 웹소설 정보를 스크래핑합니다.
      * @param {import('puppeteer-core').Page} page - Puppeteer 페이지 인스턴스
-     * @returns {Promise<import('../types/webtoon.js').Novel[]>} 관련 웹소설 정보 목록
+     * @returns {Promise<import('../types/webtoon.js').Novel[]|null>} 관련 웹소설 정보 목록
      */
     async scrapRelatedNovels(page) {
         try {
+            const exists = await page.$(this.#SELECTORS.PRODUCT_LIST);
+            if (!exists) return null;
             await page.waitForSelector(this.#SELECTORS.PRODUCT_LIST, { timeout: this.getTimeout('SELECTOR_WAIT') });
 
             return await page.evaluate(
@@ -937,6 +939,10 @@ export class NaverScraper extends ScrapingImplementor {
                 this.#SELECTORS
             );
         } catch (error) {
+            // PRODUCT_LIST 셀렉터가 없으면 null 반환
+            if (error.message && error.message.includes('waiting for selector')) {
+                return null;
+            }
             throw new Error(`관련 웹소설 정보 추출 실패: ${error.message}`);
         }
     }
@@ -944,11 +950,13 @@ export class NaverScraper extends ScrapingImplementor {
     /**
      * 연관된 웹툰들의 ID를 스크래핑합니다.
      * @param {import('puppeteer-core').Page} page
-     * @returns {Promise<string[]>}
+     * @returns {Promise<string[]|null>}
      * @throws {Error}
      */
     async scrapRelatedWebtoonIds(page) {
         try {
+            const exists = await page.$(this.#SELECTORS.RELATED_WEBTOONS);
+            if (!exists) return null;
             await page.waitForSelector(this.#SELECTORS.RELATED_WEBTOONS, { timeout: this.getTimeout('SELECTOR_WAIT') });
 
             return await page.evaluate((selectors) => {
@@ -968,6 +976,10 @@ export class NaverScraper extends ScrapingImplementor {
                 return ids;
             }, this.#SELECTORS);
         } catch (error) {
+            // AsideList__content_list--FXDvm 셀렉터가 없으면 null 반환
+            if (error.message && error.message.includes('waiting for selector')) {
+                return null;
+            }
             throw new Error(`연관 웹툰 ID 추출 실패: ${error.message}`);
         }
     }
