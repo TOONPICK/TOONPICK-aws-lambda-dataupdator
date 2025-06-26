@@ -30,4 +30,12 @@ export class ScraperFactory {
         const key = platform ? platform.toUpperCase() : undefined;
         this.scrapers.set(key, scraper);
     }
+
+    /**
+     * 등록된 모든 ScrapingImplementor 인스턴스를 배열로 반환합니다.
+     * @returns {Array<import('./scrapingImplementor.js').ScrapingImplementor>}
+     */
+    getAllScrapers() {
+        return Array.from(this.scrapers.values());
+    }
 } 
