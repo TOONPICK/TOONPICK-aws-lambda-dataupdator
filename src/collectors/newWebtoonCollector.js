@@ -1,5 +1,6 @@
 import { ContentCollector } from './contentCollector.js';
 import { ScraperFactory } from '../scrapers/scraperFactory.js';
+import { WebtoonContentCollector } from './webtoonContentCollector.js';
 
 /**
  * 신작 웹툰을 탐색하고 정보를 수집하는 Collector
@@ -19,9 +20,22 @@ export class NewWebtoonCollector extends ContentCollector {
         for (const scraper of scrapers) {
             const newWebtoonList = await scraper.scrapNewWebtoonList(browser);
             allNewWebtoons = allNewWebtoons.concat(newWebtoonList);
-            console.log(newWebtoonList);
         }
-        // 이제 해당 리스트에 웹툰 정보를 찾고 반환한다. 
-        return allNewWebtoons;
+
+        // 상세 웹툰 데이터 수집
+        const contentCollector = new WebtoonContentCollector(factory);
+        /** @type {Array<{statusCode: number, data: any, error?: string}>} */
+        const results = [];
+        for (const webtoon of allNewWebtoons) {
+            try {
+                const result = await contentCollector.execute(browser, webtoon);
+                results.push(result);
+            } catch (error) {
+                results.push({ statusCode: 500, data: webtoon, error: error.message });
+            }
+        }
+
+        console.log(results);
+        return results;
     }
 }
