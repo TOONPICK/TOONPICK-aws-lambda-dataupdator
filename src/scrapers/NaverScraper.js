@@ -1131,4 +1131,41 @@ export class NaverScraper extends ScrapingImplementor {
             };
         });
     }
+
+    /**
+     * 신작 웹툰 리스트를 수집한다.
+     * @param {import('puppeteer-core').Browser} browser - Puppeteer 브라우저 인스턴스
+     * @returns {Promise<Array<{id: string, url: string, platform: string, title: string}>>} 신작 웹툰 리스트
+     */
+    async scrapNewWebtoonList(browser) {
+        const NAVER_NEW_WEBTOON_URL = 'https://comic.naver.com/webtoon?tab=new';
+        const PLATFORM = 'NAVER';
+        const page = await browser.newPage();
+        await page.goto(NAVER_NEW_WEBTOON_URL, { waitUntil: 'domcontentloaded', timeout: this.getTimeout('PAGE_LOAD') });
+        await page.waitForSelector('ul.ContentList__content_list--q5KXY');
+
+        const newWebtoonList = await page.evaluate(() => {
+            const result = [];
+            const items = document.querySelectorAll('ul.ContentList__content_list--q5KXY > li.item');
+            items.forEach(item => {
+                // '오늘 공개' 뱃지 확인
+                const badge = item.querySelector('.Poster__badge_wrap--zo3Dq .blind');
+                if (!badge || badge.textContent.trim() !== '오늘 공개') return;
+
+                // url, id, title 추출
+                const linkElem = item.querySelector('a.ContentTitle__title_area--x24vt');
+                const titleElem = item.querySelector('.ContentTitle__title--e3qXt .text');
+                if (!linkElem || !titleElem) return;
+                const url = linkElem.getAttribute('href');
+                const idMatch = url.match(/titleId=(\d+)/);
+                const id = idMatch ? idMatch[1] : null;
+                const title = titleElem.textContent.trim();
+                if (!id || !url || !title) return;
+                result.push({ id, url: `https://comic.naver.com${url}`, platform: 'NAVER', title });
+            });
+            return result;
+        });
+        await page.close();
+        return newWebtoonList;
+    }
 } 

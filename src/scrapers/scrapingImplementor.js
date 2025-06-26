@@ -248,4 +248,13 @@ export class ScrapingImplementor {
     async scrapRelatedWebtoonIds(page) {
         throw new Error('Not implemented');
     }
+
+    /**
+     * 신작 웹툰 리스트를 수집한다.
+     * @param {import('puppeteer-core').Browser} browser - Puppeteer 브라우저 인스턴스
+     * @returns {Promise<Array<{id: string, url: string, platform: string}>>} 신작 웹툰 리스트
+     */
+    async scrapNewWebtoonList(browser) {
+        throw new Error('scrapNewWebtoonList 메서드를 구현해야 합니다.');
+    }
 } 
