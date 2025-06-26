@@ -5,39 +5,12 @@ import { loadEnv } from './src/env/index.js';
 import { SSMCoreClient, SQSCoreClient } from './src/aws/index.js';
 import { SlackCoreClient } from './src/notification/index.js';
 
-const sqsMessageFormatter = (payload, type, options) => {
+const sqsMessageFormatter = (payload, options) => {
     const { requestId, eventType } = options;
-    
-    if (type === 'error') {
-        return createSQSResponseMessage(
-            requestId,
-            'FAIL',
-            {
-                error: {
-                    message: payload.message,
-                    stack: payload.stack,
-                    name: payload.name
-                }
-            },
-            '크롤링 처리 중 오류가 발생했습니다.'
-        );
-    }
-    
-    // 성공 응답의 경우
-    if (!payload.success || !payload.data) {
-        return createSQSResponseMessage(
-            requestId,
-            'FAIL',
-            { error: payload.error || 'Unknown error' },
-            '크롤링 처리 중 오류가 발생했습니다.'
-        );
-    }
-    
-    console.log('eventType', eventType);
 
     // 이벤트 타입 결정
     let responseEventType = 'CRAWL_WEBTOON_EPISODE';
-    if (eventType === 'WEBTOON_CONTENT') {
+    if (eventType === 'WEBTOON_CONTENT' || eventType === 'NEW_WEBTOON') {
         responseEventType = 'CRAWL_WEBTOON_NEW';
     }
     
@@ -130,11 +103,11 @@ export async function handler(event) {
         let sqsMessageIds = [];
         
         // 각 결과를 개별적으로 SQS로 전송
-        for (const result of results) {
+        for (const result of results.data) {
             try {
+                console.log("result : ", result);
                 const sqsResult = await sqsClient.send(result, { 
                     requestId, 
-                    type: 'result',
                     eventType: request.eventType,
                     processingTime
                 });

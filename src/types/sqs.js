@@ -29,28 +29,19 @@
  */
 
 /**
- * @typedef {Object} SQSRequestMessage
- * @property {string} requestId - 요청을 추적하기 위한 고유 ID
- * @property {SQSEventType} eventType - 이벤트 타입
- * @property {Object} data - 실제 데이터 (이벤트 타입에 따라 다른 형식)
- * @property {string} [message] - 부가 메시지
- * @property {number} requestTime - 요청 시간 (밀리초)
- */
-
-/**
- * @typedef {Object} SQSResponseMessage
- * @property {string} requestId - 요청을 추적하기 위한 고유 ID
- * @property {SQSResponseEventType} eventType - 응답 이벤트 타입
- * @property {Object} data - 실제 데이터 (이벤트 타입에 따라 다른 형식)
- * @property {string} [message] - 부가 메시지
- * @property {number} requestTime - 요청 시간 (밀리초)
- */
-
-/**
  * @typedef {Object} CrawlRequest
  * @property {string} requestId - 요청을 추적하기 위한 고유 ID
  * @property {SQSEventType} eventType - 이벤트 타입
  * @property {Object} data - 크롤링에 필요한 데이터
+ */
+
+/**
+ * @typedef {Object} CrawlResult
+ * @property {string} requestId - 요청 고유 ID
+ * @property {import('./sqs.js').SQSEventType} eventType - 이벤트 타입
+ * @property {any} data - 결과 데이터(리스트)
+ * @property {string} message - 부가 메시지
+ * @property {number} statusCode - HTTP 상태 코드
  */
 
 /**
@@ -93,7 +84,7 @@ export function parseCrawlRequest(sqsRecord) {
  * @param {SQSResponseEventType} eventType - 응답 이벤트 타입
  * @param {Object} data - 응답 데이터
  * @param {string} [message] - 부가 메시지
- * @returns {SQSResponseMessage}
+ * @returns {CrawlResult}
  */
 export function createSQSResponseMessage(requestId, eventType, data, message = null) {
     return {

@@ -9,8 +9,15 @@ async function main() {
                 messageId: 'test-1',
                 body: JSON.stringify({
                     requestId: 'test-1',
-                    eventType: 'NEW_WEBTOON',
-                    data: {}
+                    eventType: 'WEBTOON_CONTENT',
+                    data: [
+                        {
+                            id: 832557,
+                            url: 'https://comic.naver.com/webtoon/list?titleId=832557',
+                            platform: 'NAVER',
+                            episodeCount: 42
+                        }
+                    ]
                 })
             }
         ]

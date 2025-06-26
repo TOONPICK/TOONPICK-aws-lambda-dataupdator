@@ -29,13 +29,24 @@ export class NewWebtoonCollector extends ContentCollector {
         for (const webtoon of allNewWebtoons) {
             try {
                 const result = await contentCollector.execute(browser, webtoon);
-                results.push(result);
+                results.push({
+                    statusCode: 200,
+                    data: result.data ?? result,
+                    success: true
+                });
             } catch (error) {
-                results.push({ statusCode: 500, data: webtoon, error: error.message });
+                results.push({
+                    statusCode: 500,
+                    data: {
+                        error: error.message
+                    },
+                    success: false,
+                    error: error.message
+                });
             }
         }
 
-        console.log(results);
+        console.log( "정상수행:", results.length, "건");
         return results;
     }
 }
