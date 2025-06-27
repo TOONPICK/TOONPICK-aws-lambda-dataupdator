@@ -56,11 +56,17 @@ export class Crawler {
                 }
             }
 
+            // 응답 이벤트 타입 결정
+            let responseEventType = 'CRAWL_WEBTOON_NEW';
+            if (eventType === 'WEBTOON_CONTENT' || eventType === 'NEW_WEBTOON') {
+                responseEventType = 'CRAWL_WEBTOON_NEW';
+            }
+
             // SQSResponseMessage 단일 객체로 반환
             const statusCode = results.some(r => r.statusCode === 500) ? 500 : 200;
             return {
                 requestId: requestId || `req-${Date.now()}`,
-                eventType,
+                eventType: responseEventType,
                 data: results,
                 message: (statusCode === 200 ? '크롤링이 성공적으로 완료되었습니다.' : '크롤링 처리 중 오류가 발생했습니다.'),
                 statusCode
@@ -68,7 +74,7 @@ export class Crawler {
         } catch (error) {
             return {
                 requestId: requestId || `req-${Date.now()}`,
-                eventType,
+                eventType: 'CRAWL_WEBTOON_EPISODE',
                 data: [{ error: error.message }],
                 message: error.message,
                 statusCode: 500

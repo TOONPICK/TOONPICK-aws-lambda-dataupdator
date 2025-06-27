@@ -11,7 +11,7 @@ export class WebtoonUpdateCollector extends ContentCollector {
     /**
      * @param {import('puppeteer-core').Browser} browser
      * @param {import('../types/webtoon.js').WebtoonData} data
-     * @returns {Promise<{statusCode: number, data: import('../types/webtoon.js').WebtoonUpdateResult}>}
+     * @returns {Promise<import('../types/webtoon.js').WebtoonUpdateResult>}
      */
     async execute(browser, data) {
         const { id, url, platform, episodeCount } = data;
@@ -40,26 +40,20 @@ export class WebtoonUpdateCollector extends ContentCollector {
                 const episodes = [...freeEpisodes, ...paidEpisodes];
                 
                 return {
-                    statusCode: 200,
-                    data: {
-                        id,
-                        url,
-                        platform,
-                        episodes,
-                        episodeCount: currentEpisodeCount,
-                        lastUpdatedDate
-                    }
+                    id,
+                    url,
+                    platform,
+                    episodes,
+                    episodeCount: currentEpisodeCount,
+                    lastUpdatedDate
                 };
             } else {
                 return {
-                    statusCode: 204,
-                    data: {
-                        id,
-                        url,
-                        platform,
-                        episodes: [],
-                        message: 'No new episodes. Collection is on hold.'
-                    }
+                    id,
+                    url,
+                    platform,
+                    episodes: [],
+                    message: 'No new episodes. Collection is on hold.'
                 };
             }
         } finally {

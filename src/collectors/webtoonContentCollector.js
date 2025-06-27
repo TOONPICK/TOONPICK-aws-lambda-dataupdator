@@ -11,7 +11,7 @@ export class WebtoonContentCollector extends ContentCollector {
     /**
      * @param {import('puppeteer-core').Browser} browser
      * @param {import('../types/webtoon.js').WebtoonData} data
-     * @returns {Promise<{statusCode: number, data: import('../types/webtoon.js').WebtoonScrapResult}>}
+     * @returns {Promise<import('../types/webtoon.js').WebtoonScrapResult>}
      */
     async execute(browser, data) {
         const { id, url, platform, episodeCount } = data;
@@ -75,29 +75,26 @@ export class WebtoonContentCollector extends ContentCollector {
             const episodes = [...freeEpisodes, ...paidEpisodes];
 
             return {
-                statusCode: 200,
-                data: {
-                    id: 0,
-                    externalId: id,
-                    url,
-                    title,
-                    uniqueId,
-                    platform,
-                    description,
-                    thumbnailUrl,
-                    dayOfWeek,
-                    status,
-                    ageRating,
-                    episodeCount,
-                    previewCount,
-                    genres,
-                    authors,
-                    publishStartDate,
-                    lastUpdatedDate,
-                    episodes,   
-                    relatedNovels,
-                    relatedWebtoonIds
-                }
+                id: 0,
+                externalId: id,
+                url,
+                title,
+                uniqueId,
+                platform,
+                description,
+                thumbnailUrl,
+                dayOfWeek,
+                status,
+                ageRating,
+                episodeCount,
+                previewCount,
+                genres,
+                authors,
+                publishStartDate,
+                lastUpdatedDate,
+                episodes,   
+                relatedNovels,
+                relatedWebtoonIds
             };
         } finally {
             await page.close();

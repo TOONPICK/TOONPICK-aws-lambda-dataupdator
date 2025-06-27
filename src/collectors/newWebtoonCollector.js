@@ -30,18 +30,11 @@ export class NewWebtoonCollector extends ContentCollector {
             try {
                 const result = await contentCollector.execute(browser, webtoon);
                 results.push({
-                    statusCode: 200,
-                    data: result.data ?? result,
-                    success: true
+                    ...result
                 });
             } catch (error) {
                 results.push({
-                    statusCode: 500,
-                    data: {
-                        error: error.message
-                    },
-                    success: false,
-                    error: error.message
+                    ...error
                 });
             }
         }
