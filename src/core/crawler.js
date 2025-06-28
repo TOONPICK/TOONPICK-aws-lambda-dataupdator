@@ -11,9 +11,9 @@ export class Crawler {
         this.browserType = browserType;
         this.scraperFactory = new ScraperFactory();
         this.collectors = new Map([
-            ['WEBTOON_CONTENT', new WebtoonContentCollector(this.scraperFactory)],
-            ['WEBTOON_UPDATE', new WebtoonUpdateCollector(this.scraperFactory)],
-            ['NEW_WEBTOON', new NewWebtoonCollector(this.scraperFactory)]
+            ['CRAWL_WEBTOON_ALL', new WebtoonContentCollector(this.scraperFactory)],
+            ['CRAWL_WEBTOON_EPISODE', new WebtoonUpdateCollector(this.scraperFactory)],
+            ['CRAWL_WEBTOON_NEW', new NewWebtoonCollector(this.scraperFactory)]
         ]);
     }
 
@@ -56,17 +56,12 @@ export class Crawler {
                 }
             }
 
-            // 응답 이벤트 타입 결정
-            let responseEventType = 'CRAWL_WEBTOON_NEW';
-            if (eventType === 'WEBTOON_CONTENT' || eventType === 'NEW_WEBTOON') {
-                responseEventType = 'CRAWL_WEBTOON_NEW';
-            }
 
             // SQSResponseMessage 단일 객체로 반환
             const statusCode = results.some(r => r.statusCode === 500) ? 500 : 200;
             return {
                 requestId: requestId || `req-${Date.now()}`,
-                eventType: responseEventType,
+                eventType: eventType,
                 data: results,
                 message: (statusCode === 200 ? '크롤링이 성공적으로 완료되었습니다.' : '크롤링 처리 중 오류가 발생했습니다.'),
                 statusCode

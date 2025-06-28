@@ -25,10 +25,6 @@
  */
 
 /**
- * @typedef {'CRAWL_WEBTOON_NEW' | 'CRAWL_WEBTOON_EPISODE' | 'CRAWL_WEBTOON_ALL'} SQSResponseEventType
- */
-
-/**
  * @typedef {Object} CrawlRequest
  * @property {string} requestId - 요청을 추적하기 위한 고유 ID
  * @property {SQSEventType} eventType - 이벤트 타입
@@ -58,10 +54,6 @@ export function parseCrawlRequest(sqsRecord) {
         // eventType, data가 없고 requests가 있으면 이를 매핑
         let eventType = requestMessage.eventType;
         let data = requestMessage.data;
-        if (!eventType && requestMessage.requests) {
-            eventType = 'CRAWL_WEBTOON_EPISODE';
-            data = requestMessage.requests;
-        }
 
         // SQS 메시지 구조 검증
         if (!eventType || !data) {
