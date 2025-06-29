@@ -257,4 +257,22 @@ export class ScrapingImplementor {
     async scrapNewWebtoonList(browser) {
         throw new Error('scrapNewWebtoonList 메서드를 구현해야 합니다.');
     }
+
+    /**
+     * 모든 웹툰 리스트를 수집한다.
+     * @param {import('puppeteer-core').Browser} browser - Puppeteer 브라우저 인스턴스
+     * @returns {Promise<Array<{id: string, title: string, url: string, platform: string}>>} 모든 웹툰 리스트
+     */
+    async scrapAllWebtoonList(browser) {
+        throw new Error('scrapAllWebtoonList 메서드를 구현해야 합니다.');
+    }
+
+    /**
+     * 완결 웹툰 리스트를 스크롤을 통해 모두 수집한다.
+     * @param {import('puppeteer-core').Browser} browser - Puppeteer 브라우저 인스턴스
+     * @returns {Promise<Array<{id: string, title: string, url: string, platform: string}>>} 완결 웹툰 리스트
+     */
+    async scrapAllCompletedWebtoonList(browser) {
+        throw new Error('scrapAllCompletedWebtoonList 메서드를 구현해야 합니다.');
+    }
 } 

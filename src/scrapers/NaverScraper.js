@@ -1180,4 +1180,122 @@ export class NaverScraper extends ScrapingImplementor {
         await page.close();
         return newWebtoonList;
     }
+
+    /**
+     * 모든 웹툰 리스트를 수집한다.
+     * @param {import('puppeteer-core').Browser} browser - Puppeteer 브라우저 인스턴스
+     * @returns {Promise<Array<{id: string, title: string, url: string, platform: string}>>} 모든 웹툰 리스트
+     */
+    async scrapAllWebtoonList(browser) {
+        const TABS = [
+            'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun', 'dailyPlus'
+        ];
+        const PLATFORM = 'NAVER';
+        const allWebtoons = [];
+        const page = await browser.newPage();
+
+        try {
+            for (const tab of TABS) {
+                const url = `https://comic.naver.com/webtoon?tab=${tab}`;
+                await page.goto(url, {
+                    waitUntil: 'domcontentloaded',
+                    timeout: this.getTimeout('PAGE_LOAD')
+                });
+                await page.waitForSelector('ul.ContentList__content_list--q5KXY', {
+                    timeout: this.getTimeout('SELECTOR_WAIT')
+                });
+
+                const webtoons = await page.evaluate((PLATFORM) => {
+                    const result = [];
+                    const items = document.querySelectorAll('ul.ContentList__content_list--q5KXY > li.item');
+                    items.forEach(item => {
+                        const linkElem = item.querySelector('a.Poster__link--sopnC');
+                        const titleElem = item.querySelector('.ContentTitle__title--e3qXt .text');
+                        if (!linkElem || !titleElem) return;
+                        const url = linkElem.getAttribute('href');
+                        const idMatch = url.match(/titleId=(\d+)/);
+                        const id = idMatch ? idMatch[1] : null;
+                        const title = titleElem.textContent.trim();
+                        if (!id || !url || !title) return;
+                        result.push({
+                            id,
+                            title,
+                            url: `https://comic.naver.com${url}`,
+                            platform: PLATFORM
+                        });
+                    });
+                    return result;
+                }, PLATFORM);
+                allWebtoons.push(...webtoons);
+            }
+        } catch (error) {
+            console.error('웹툰 목록 수집 중 오류:', error);
+            throw new Error(`웹툰 목록 수집 실패: ${error.message}`);
+        } finally {
+            await page.close();
+        }
+        return allWebtoons;
+    }
+
+    /**
+     * 완결 웹툰 리스트를 스크롤을 통해 모두 수집한다.
+     * @param {import('puppeteer-core').Browser} browser - Puppeteer 브라우저 인스턴스
+     * @returns {Promise<Array<{id: string, title: string, url: string, platform: string}>>} 완결 웹툰 리스트
+     */
+    async scrapAllCompletedWebtoonList(browser) {
+        const PLATFORM = 'NAVER';
+        const url = 'https://comic.naver.com/webtoon?tab=finish';
+        const page = await browser.newPage();
+        await page.goto(url, {
+            waitUntil: 'domcontentloaded',
+            timeout: this.getTimeout('PAGE_LOAD')
+        });
+        await page.waitForSelector('ul.ContentList__content_list--q5KXY', {
+            timeout: this.getTimeout('SELECTOR_WAIT')
+        });
+
+        let prevCount = 0;
+        let sameCountRepeat = 0;
+        const MAX_REPEAT = 10;
+        while (true) {
+            // 스크롤을 맨 아래로 내림
+            await page.evaluate(() => {
+                window.scrollTo(0, document.body.scrollHeight);
+            });
+            await page.waitForTimeout(1000);
+            // 현재 아이템 개수
+            const currCount = await page.evaluate(() => document.querySelectorAll('ul.ContentList__content_list--q5KXY > li.item').length);
+            if (currCount === prevCount) {
+                sameCountRepeat++;
+            } else {
+                sameCountRepeat = 0;
+            }
+            if (sameCountRepeat >= MAX_REPEAT) break;
+            prevCount = currCount;
+        }
+        // 모든 아이템 수집
+        const webtoons = await page.evaluate((PLATFORM) => {
+            const result = [];
+            const items = document.querySelectorAll('ul.ContentList__content_list--q5KXY > li.item');
+            items.forEach(item => {
+                const linkElem = item.querySelector('a.Poster__link--sopnC');
+                const titleElem = item.querySelector('.ContentTitle__title--e3qXt .text');
+                if (!linkElem || !titleElem) return;
+                const url = linkElem.getAttribute('href');
+                const idMatch = url.match(/titleId=(\d+)/);
+                const id = idMatch ? idMatch[1] : null;
+                const title = titleElem.textContent.trim();
+                if (!id || !url || !title) return;
+                result.push({
+                    id,
+                    title,
+                    url: `https://comic.naver.com${url}`,
+                    platform: PLATFORM
+                });
+            });
+            return result;
+        }, PLATFORM);
+        await page.close();
+        return webtoons;
+    }
 } 
