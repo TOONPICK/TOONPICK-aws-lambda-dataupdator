@@ -1,4 +1,4 @@
-import { JsonRepository } from './src/repository/jsonRepository.js';
+import { JsonRepository } from '../src/repository/jsonRepository.js';
 
 async function testJsonRepository() {
     console.log('=== JSON Repository 테스트 시작 ===\n');

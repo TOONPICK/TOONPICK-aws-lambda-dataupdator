@@ -1,5 +1,5 @@
-import { LocalBrowser } from './src/browsers/localBrowser.js';
-import { NaverScraper } from './src/scrapers/naverScraper.js';
+import { LocalBrowser } from '../src/browsers/localBrowser.js';
+import { NaverScraper } from '../src/scrapers/naverScraper.js';
 
 /**
  * 모든 웹툰 탐색 메서드 테스트
