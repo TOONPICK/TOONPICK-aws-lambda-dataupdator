@@ -125,3 +125,4 @@ html/
 # Local development files
 local.js
 test.js
+/output
