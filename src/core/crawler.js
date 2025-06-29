@@ -1,6 +1,7 @@
 import { WebtoonContentCollector } from '../collectors/webtoonContentCollector.js';
 import { WebtoonUpdateCollector } from '../collectors/webtoonUpdateCollector.js';
 import { NewWebtoonCollector } from '../collectors/newWebtoonCollector.js';
+import { AllWebtoonCollector } from '../collectors/allWebtoonCollector.js';
 import { ScraperFactory } from '../scrapers/scraperFactory.js';
 
 export class Crawler {
@@ -13,7 +14,8 @@ export class Crawler {
         this.collectors = new Map([
             ['CRAWL_WEBTOON_ALL', new WebtoonContentCollector(this.scraperFactory)],
             ['CRAWL_WEBTOON_EPISODE', new WebtoonUpdateCollector(this.scraperFactory)],
-            ['CRAWL_WEBTOON_NEW', new NewWebtoonCollector(this.scraperFactory)]
+            ['CRAWL_WEBTOON_NEW', new NewWebtoonCollector(this.scraperFactory)],
+            ['CRAWL_WEBTOON_ALL', new AllWebtoonCollector(this.scraperFactory)]
         ]);
     }
 
@@ -69,7 +71,7 @@ export class Crawler {
         } catch (error) {
             return {
                 requestId: requestId || `req-${Date.now()}`,
-                eventType: 'CRAWL_WEBTOON_EPISODE',
+                eventType: 'FAIL',
                 data: [{ error: error.message }],
                 message: error.message,
                 statusCode: 500

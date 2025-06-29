@@ -1,6 +1,7 @@
 import { WebtoonContentCollector } from './webtoonContentCollector.js';
 import { WebtoonUpdateCollector } from './webtoonUpdateCollector.js';
 import { NewWebtoonCollector } from './newWebtoonCollector.js';
+import { AllWebtoonCollector } from './allWebtoonCollector.js';
 
 /**
  * ContentCollector 생성을 담당하는 팩토리 클래스
@@ -10,7 +11,8 @@ export class CollectorFactory {
         this.collectors = new Map([
             ['WEBTOON_CRAWL', () => new WebtoonContentCollector()],
             ['WEBTOON_UPDATE', () => new WebtoonUpdateCollector()],
-            ['NEW_WEBTOON', () => new NewWebtoonCollector()]
+            ['NEW_WEBTOON', () => new NewWebtoonCollector()],
+            ['ALL_WEBTOON', () => new AllWebtoonCollector()]
         ]);
     }
 
