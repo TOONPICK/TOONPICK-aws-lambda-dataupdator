@@ -126,3 +126,6 @@ html/
 local.js
 test.js
 /output
+
+# Batch processing files
+batch-sender.js
