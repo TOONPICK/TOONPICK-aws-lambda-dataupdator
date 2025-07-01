@@ -108,6 +108,8 @@ Thumbs.db
 *.swp
 *.swo
 *~
+*.ini
+*.exe
 
 # AWS
 .aws/
